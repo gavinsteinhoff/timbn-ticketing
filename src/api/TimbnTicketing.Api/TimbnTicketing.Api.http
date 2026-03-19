@@ -1,0 +1,6 @@
+@TimbnTicketing.Api_HostAddress = http://localhost:5084
+
+GET {{TimbnTicketing.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

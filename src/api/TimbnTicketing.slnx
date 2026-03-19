@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="TimbnTicketing.Api/TimbnTicketing.Api.csproj" />
+  <Project Path="TimbnTicketing.AppHost/TimbnTicketing.AppHost.csproj" />
+  <Project Path="TimbnTicketing.Core/TimbnTicketing.Core.csproj" />
+  <Project Path="TimbnTicketing.Infrastructure/TimbnTicketing.Infrastructure.csproj" />
+  <Project Path="TimbnTicketing.ServiceDefaults/TimbnTicketing.ServiceDefaults.csproj" />
+</Solution>

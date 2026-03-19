@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Auth Test</title>
+
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.css"
+    />
+
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background: #1a1a2e;
+        color: #e0e0e0;
+        min-height: 100vh;
+      }
+      .container {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+      h1 {
+        margin-bottom: 1.5rem;
+      }
+      h2 {
+        margin: 1.5rem 0 0.75rem;
+        font-size: 1.1rem;
+        color: #aaa;
+      }
+      button {
+        background: #4285f4;
+        color: white;
+        border: none;
+        padding: 0.6rem 1.2rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.95rem;
+      }
+      button:hover {
+        background: #3367d6;
+      }
+      .user-info {
+        background: #16213e;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+      }
+      .user-info p {
+        margin-bottom: 0.4rem;
+      }
+      .uid {
+        font-family: monospace;
+        font-size: 0.85rem;
+        color: #888;
+      }
+      .sign-out {
+        margin-top: 0.5rem;
+        background: #555;
+      }
+      .token-box {
+        position: relative;
+        background: #0f0f23;
+        border: 1px solid #333;
+        border-radius: 8px;
+        padding: 1rem;
+        overflow-x: auto;
+      }
+      .token-box pre {
+        word-break: break-all;
+        white-space: pre-wrap;
+        font-size: 0.8rem;
+        line-height: 1.4;
+      }
+      .copy-btn {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        padding: 0.3rem 0.7rem;
+        font-size: 0.8rem;
+        background: #333;
+      }
+      .decoded {
+        background: #0f0f23;
+        border: 1px solid #333;
+        border-radius: 8px;
+        padding: 1rem;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        overflow-x: auto;
+        white-space: pre-wrap;
+      }
+      #firebaseui-auth-container {
+        margin-top: 1rem;
+      }
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Auth Test</h1>
+
+      <!-- Login view -->
+      <div id="login-view">
+        <div id="firebaseui-auth-container"></div>
+      </div>
+
+      <!-- Authenticated view -->
+      <div id="user-view" class="hidden">
+        <div class="user-info">
+          <p><strong id="display-name"></strong> (<span id="email"></span>)</p>
+          <p class="uid">UID: <span id="uid"></span></p>
+          <button class="sign-out" onclick="firebase.auth().signOut()">
+            Sign out
+          </button>
+        </div>
+
+        <h2>JWT Token</h2>
+        <div class="token-box">
+          <button class="copy-btn" onclick="copyToken()">Copy</button>
+          <pre id="token"></pre>
+        </div>
+
+        <h2>Decoded Payload</h2>
+        <pre class="decoded" id="decoded"></pre>
+      </div>
+    </div>
+
+    <script>
+      // Firebase config — replace with your project's values
+      firebase.initializeApp({
+        apiKey: "AIzaSyBlGC3IMAdL_57NIM4adU_7eZVq9JYWHbA",
+        authDomain: "timbn-ticketing.firebaseapp.com",
+        projectId: "timbn-ticketing",
+      });
+
+      // FirebaseUI config
+      const ui = new firebaseui.auth.AuthUI(firebase.auth());
+
+      function startUI() {
+        ui.start("#firebaseui-auth-container", {
+          signInOptions: [
+            firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+            firebase.auth.EmailAuthProvider.PROVIDER_ID,
+          ],
+          signInFlow: "popup",
+          callbacks: {
+            signInSuccessWithAuthResult: () => false, // stay on page
+          },
+        });
+      }
+
+      // Auth state listener
+      firebase.auth().onAuthStateChanged(async (user) => {
+        const loginView = document.getElementById("login-view");
+        const userView = document.getElementById("user-view");
+
+        if (user) {
+          loginView.classList.add("hidden");
+          userView.classList.remove("hidden");
+
+          document.getElementById("display-name").textContent =
+            user.displayName || "No name";
+          document.getElementById("email").textContent = user.email;
+          document.getElementById("uid").textContent = user.uid;
+
+          const idToken = await user.getIdToken();
+          document.getElementById("token").textContent = idToken;
+
+          try {
+            const payload = JSON.parse(atob(idToken.split(".")[1]));
+            document.getElementById("decoded").textContent = JSON.stringify(
+              payload,
+              null,
+              2,
+            );
+          } catch {}
+        } else {
+          loginView.classList.remove("hidden");
+          userView.classList.add("hidden");
+          startUI();
+        }
+      });
+
+      function copyToken() {
+        const token = document.getElementById("token").textContent;
+        navigator.clipboard.writeText(token);
+        const btn = document.querySelector(".copy-btn");
+        btn.textContent = "Copied!";
+        setTimeout(() => (btn.textContent = "Copy"), 2000);
+      }
+    </script>
+  </body>
+</html>

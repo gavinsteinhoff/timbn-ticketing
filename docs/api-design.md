@@ -20,7 +20,7 @@ Organization-scoped routes use `/orgs/{orgSlug}/...`. The API resolves `orgSlug`
 
 ### Authorization
 
-Permission checks reference the boolean flags on the user's Role for the current organization. A reusable authorization filter reads the required permission from endpoint metadata and checks it against the request context.
+Permissions use a bitwise flags pattern (Discord-style). The Role entity stores a single `Permission Permissions` field (backed by `bigint`) where each bit represents a capability. A reusable authorization filter reads the required permission from endpoint metadata and checks it against the request context using `HasFlag()`.
 
 ```csharp
 // Example: require can_manage_events permission
@@ -463,13 +463,7 @@ List all roles for the organization.
       "slug": "admin",
       "hierarchy": 10,
       "isDefault": false,
-      "CanManageOrganization": false,
-      "CanCreateEvents": true,
-      "CanManageEvents": true,
-      "CanManageRoles": true,
-      "CanManageBilling": false,
-      "CanCheckin": true,
-      "CanViewAttendees": true
+      "permissions": 110
     }
   ]
 }
@@ -488,9 +482,7 @@ Create a new role. The caller can only create roles with a hierarchy number **hi
   "name": "Volunteer Coordinator",
   "slug": "volunteer-coordinator",
   "hierarchy": 40,
-  "CanCheckin": true,
-  "CanViewAttendees": true,
-  "CanManageRoles": true
+  "permissions": 104
 }
 ```
 
@@ -499,7 +491,7 @@ Create a new role. The caller can only create roles with a hierarchy number **hi
 **Validation:**
 
 - `hierarchy` must be greater than the caller's role hierarchy
-- Cannot set any permission flag that the caller's own role does not have
+- Cannot grant any permission bit that the caller's own role does not have
 
 #### `PATCH /orgs/{orgSlug}/roles/{roleId}`
 
@@ -1590,7 +1582,7 @@ Request
   ├─ 4. Auth0 JWT Validation
   ├─ 5. Org Resolution (resolve orgSlug → OrganizationId, attach to HttpContext)
   ├─ 6. Membership Resolution (lookup UserOrganizations for current user + org)
-  ├─ 7. Permission Filter (check role boolean against endpoint requirement)
+  ├─ 7. Permission Filter (check role permission bit against endpoint requirement)
   │
   └─ Endpoint Handler
 
@@ -1605,11 +1597,11 @@ Runs on all `/orgs/{orgSlug}/*` routes. Resolves the slug to an org record and a
 
 ### Membership Resolution Middleware
 
-Runs after org resolution for authenticated requests. Looks up the user's `UserOrganizations` record for the current org and attaches their role (with all permission flags) to `HttpContext.Items`. If the user is not a member of the org, the role is null — individual endpoint filters decide whether to allow or deny.
+Runs after org resolution for authenticated requests. Looks up the user's `UserOrganizations` record for the current org and loads the role's bitwise `Permissions` value into `CurrentUserContext`. If the user is not a member of the org, permissions remain `None` — individual endpoint filters decide whether to allow or deny.
 
 ### Permission Filter
 
-Applied per-endpoint via `.RequirePermission("CanManageEvents")`. Reads the role from `HttpContext.Items` and checks the specified boolean flag. Returns `403` if the flag is false or role is null.
+Applied per-endpoint via `.RequirePermission("CanManageEvents")`. Reads `CurrentUserContext` and checks the specified permission bit via `HasPermission()` (which uses `HasFlag()`). Returns `403` if the bit is not set or the user is not a member.
 
 ```csharp
 // Example registration

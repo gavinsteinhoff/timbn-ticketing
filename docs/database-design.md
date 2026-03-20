@@ -45,24 +45,30 @@ Core identity. Auth credentials live in Auth0 — this table holds profile data 
 
 ### Roles
 
-Organization-defined roles for access control. Each org can create whatever roles make sense for them. Permissions are tracked as simple boolean flags — add columns as new capabilities are introduced. The `hierarchy` column enforces a pecking order: users with `CanManageRoles` can only create, edit, or assign roles with a **higher** hierarchy number (lower privilege) than their own.
+Organization-defined roles for access control. Each org can create whatever roles make sense for them. Permissions use a bitwise flags pattern (Discord-style) — a single `BIGINT` column where each bit represents a permission. New permissions are added by appending the next bit position; positions must never be reused or reordered. The `hierarchy` column enforces a pecking order: users with `CanManageRoles` can only create, edit, or assign roles with a **higher** hierarchy number (lower privilege) than their own.
 
-| Column                | Type             | Constraints                           | Notes                                                                 |
-| --------------------- | ---------------- | ------------------------------------- | --------------------------------------------------------------------- |
-| Id                    | UNIQUEIDENTIFIER | PK                                    |                                                                       |
-| OrganizationId        | UNIQUEIDENTIFIER | FK → Organizations, NOT NULL          |                                                                       |
-| Name                  | NVARCHAR(100)    | NOT NULL                              | Display name, e.g. `Admin`, `Volunteer`, `Moderator`                  |
-| Slug                  | NVARCHAR(100)    | NOT NULL                              | Code-safe identifier, e.g. `admin`, `volunteer`                       |
-| Hierarchy             | INT              | NOT NULL, DEFAULT 100                 | Lower number = higher privilege. Used to restrict role management     |
-| IsDefault             | BIT              | NOT NULL, DEFAULT 0                   | Auto-assigned to new members of this org                              |
-| CanManageOrganization | BIT              | NOT NULL, DEFAULT 0                   | Edit org branding, description, settings                              |
-| CanCreateEvents       | BIT              | NOT NULL, DEFAULT 0                   | Create new events                                                     |
-| CanManageEvents       | BIT              | NOT NULL, DEFAULT 0                   | Edit/delete existing events and ticket types                          |
-| CanManageRoles        | BIT              | NOT NULL, DEFAULT 0                   | Create/edit/assign roles with a higher hierarchy number than own role |
-| CanManageBilling      | BIT              | NOT NULL, DEFAULT 0                   | Stripe Connect, view financials                                       |
-| CanCheckin            | BIT              | NOT NULL, DEFAULT 0                   | Scan QR codes at the door                                             |
-| CanViewAttendees      | BIT              | NOT NULL, DEFAULT 0                   | View attendee lists and sales                                         |
-| CreatedAt             | DATETIMEOFFSET   | NOT NULL, DEFAULT SYSDATETIMEOFFSET() |                                                                       |
+| Column         | Type             | Constraints                           | Notes                                                            |
+| -------------- | ---------------- | ------------------------------------- | ---------------------------------------------------------------- |
+| Id             | UNIQUEIDENTIFIER | PK                                    |                                                                  |
+| OrganizationId | UNIQUEIDENTIFIER | FK → Organizations, NOT NULL          |                                                                  |
+| Name           | NVARCHAR(100)    | NOT NULL                              | Display name, e.g. `Admin`, `Volunteer`, `Moderator`             |
+| Slug           | NVARCHAR(100)    | NOT NULL                              | Code-safe identifier, e.g. `admin`, `volunteer`                  |
+| Hierarchy      | INT              | NOT NULL, DEFAULT 100                 | Lower number = higher privilege. Used to restrict role management |
+| IsDefault      | BIT              | NOT NULL, DEFAULT 0                   | Auto-assigned to new members of this org                         |
+| Permissions    | BIGINT           | NOT NULL, DEFAULT 0                   | Bitwise permission flags (see Permission Bits below)             |
+| CreatedAt      | DATETIMEOFFSET   | NOT NULL, DEFAULT SYSDATETIMEOFFSET() |                                                                  |
+
+**Permission Bits:**
+
+| Bit | Value | Permission            | Description                                                   |
+| --- | ----- | --------------------- | ------------------------------------------------------------- |
+| 0   | 1     | CanManageOrganization | Edit org branding, description, settings                      |
+| 1   | 2     | CanCreateEvents       | Create new events                                             |
+| 2   | 4     | CanManageEvents       | Edit/delete existing events and ticket types                  |
+| 3   | 8     | CanManageRoles        | Create/edit/assign roles with higher hierarchy than own role  |
+| 4   | 16    | CanManageBilling      | Stripe Connect, view financials                               |
+| 5   | 32    | CanCheckin            | Scan QR codes at the door                                     |
+| 6   | 64    | CanViewAttendees      | View attendee lists and sales                                 |
 
 **Unique constraint:** `(OrganizationId, Slug)`
 
@@ -70,13 +76,13 @@ Organization-defined roles for access control. Each org can create whatever role
 
 **Example roles for KCGameOn:**
 
-| Name      | Slug      | Hierarchy | IsDefault | CanManageOrganization | CanCreateEvents | CanManageEvents | CanManageRoles | CanManageBilling | CanCheckin | CanViewAttendees |
-| --------- | --------- | --------- | --------- | --------------------- | --------------- | --------------- | -------------- | ---------------- | ---------- | ---------------- |
-| Owner     | owner     | 0         | FALSE     | TRUE                  | TRUE            | TRUE            | TRUE           | TRUE             | TRUE       | TRUE             |
-| Admin     | admin     | 10        | FALSE     | FALSE                 | TRUE            | TRUE            | TRUE           | FALSE            | TRUE       | TRUE             |
-| Moderator | moderator | 20        | FALSE     | FALSE                 | FALSE           | FALSE           | TRUE           | FALSE            | TRUE       | TRUE             |
-| Volunteer | volunteer | 50        | FALSE     | FALSE                 | FALSE           | FALSE           | FALSE          | FALSE            | TRUE       | FALSE            |
-| Member    | member    | 100       | TRUE      | FALSE                 | FALSE           | FALSE           | FALSE          | FALSE            | FALSE      | FALSE            |
+| Name      | Slug      | Hierarchy | IsDefault | Permissions (decimal) | Permissions (flags)                                                                                    |
+| --------- | --------- | --------- | --------- | --------------------- | ------------------------------------------------------------------------------------------------------ |
+| Owner     | owner     | 0         | FALSE     | 127                   | All 7 permissions                                                                                      |
+| Admin     | admin     | 10        | FALSE     | 110                   | CanCreateEvents \| CanManageEvents \| CanManageRoles \| CanCheckin \| CanViewAttendees                 |
+| Moderator | moderator | 20        | FALSE     | 104                   | CanManageRoles \| CanCheckin \| CanViewAttendees                                                       |
+| Volunteer | volunteer | 50        | FALSE     | 32                    | CanCheckin                                                                                             |
+| Member    | member    | 100       | TRUE      | 0                     | None                                                                                                   |
 
 ---
 
@@ -368,11 +374,11 @@ The purchaser (on Orders) and the attendee (on UserTickets) can be different peo
 
 ### Check-In Audit Trail
 
-`UserTickets.CheckedInAt` and `CheckedInByStaffId` record exactly when someone was scanned in and by whom. The QR code encodes `TicketCode`, and the check-in API endpoint requires the staff member's role to have `CanCheckin = true`. Check-in is only available when the current time falls within the event's `CheckinStartsAt` and `CheckinEndsAt` window. If `CheckinStartsAt` is NULL, check-in is disabled for that event. Tickets in `pendingClaim` status cannot be checked in — they must be claimed first.
+`UserTickets.CheckedInAt` and `CheckedInByStaffId` record exactly when someone was scanned in and by whom. The QR code encodes `TicketCode`, and the check-in API endpoint requires the staff member's role to have the `CanCheckin` permission bit set. Check-in is only available when the current time falls within the event's `CheckinStartsAt` and `CheckinEndsAt` window. If `CheckinStartsAt` is NULL, check-in is disabled for that event. Tickets in `pendingClaim` status cannot be checked in — they must be claimed first.
 
 ### Organization-Defined Roles
 
-Roles are stored in the database rather than hardcoded so each organization can define roles that match their structure. Permissions are boolean columns on the Roles table. When new capabilities are added to the platform, a new boolean column is added with `DEFAULT 0` so existing roles are unaffected. The `hierarchy` integer enforces a pecking order — a user can only manage or assign roles with a higher hierarchy number than their own. This prevents privilege escalation (e.g., a volunteer coordinator editing an admin role or assigning themselves to it).
+Roles are stored in the database rather than hardcoded so each organization can define roles that match their structure. Permissions use a bitwise flags pattern (Discord-style) — a single `BIGINT Permissions` column where each bit represents a capability. The C# `Permission` enum is `[Flags] : long` with power-of-2 values. New permissions are added by appending the next bit shift (`1L << 7`, `1L << 8`, etc.); existing roles are unaffected because their stored value doesn't include the new bit. Bit positions must never be reused or reordered. The `hierarchy` integer enforces a pecking order — a user can only manage or assign roles with a higher hierarchy number than their own. This prevents privilege escalation (e.g., a volunteer coordinator editing an admin role or assigning themselves to it).
 
 ### Venues Notes
 

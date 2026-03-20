@@ -67,8 +67,9 @@ All database queries must be scoped to OrganizationId to prevent cross-tenant da
 ### Auth & Permissions
 
 - Auth0 JWTs for authentication
-- Role-based access with boolean permission flags on the Role entity (e.g., `CanManageEvents`, `CanCheckin`)
+- Bitwise permissions (Discord-style): Role entity stores a single `Permission Permissions` field (backed by `bigint`). The `Permission` enum is `[Flags] : long` with power-of-2 values (`1L << 0` through `1L << 6`). New permissions are added by appending the next bit shift — positions must never be reused or reordered.
 - Role hierarchy: lower number = higher privilege. Users can only manage roles with higher hierarchy numbers than their own.
+- `CurrentUserContext` holds a `Permission` flags field; `HasPermission()` uses `HasFlag()` (single AND instruction)
 - Endpoints use `RequirePermission("CanXxx")` extension which triggers `PermissionEndpointFilter`
 
 ### Key Domain Concepts

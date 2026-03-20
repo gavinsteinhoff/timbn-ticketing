@@ -80,11 +80,12 @@ src/api/
 │   │   ├── TicketClaimEndpoints.cs
 │   │   ├── TicketEndpoints.cs
 │   │   └── CurrentUserEndpoints.cs
-│   ├── Middleware/
+│   ├── Auth/
+│   │   ├── CurrentUserContext.cs               # Scoped service: user ID, org, bitwise permissions
 │   │   ├── OrgResolutionMiddleware.cs          # Resolve orgSlug → OrganizationId
-│   │   └── MembershipResolutionMiddleware.cs   # Resolve user + org → role
-│   ├── Filters/
-│   │   └── PermissionEndpointFilter.cs         # Check role boolean flags
+│   │   ├── MembershipResolutionMiddleware.cs   # Resolve user + org → role + permissions
+│   │   ├── UserResolverMiddleware.cs           # Resolve JWT sub → UserId
+│   │   └── PermissionEndpointFilter.cs         # Check role permission bits via HasFlag
 │   ├── Extensions/
 │   │   ├── HttpContextExtensions.cs            # GetOrgRole(), GetCurrentUser()
 │   │   └── RouteBuilderExtensions.cs           # RequirePermission()
@@ -418,15 +419,14 @@ Dashboard pages check the user's role permissions via `OrgContext`. The `usePerm
 
 ```typescript
 // src/hooks/usePermission.ts
-export function usePermission(permission: string): boolean {
-  const { role } = useCurrentOrg();
-  if (!role) return false;
-  return role[permission] === true;
+export function usePermission(permission: number): boolean {
+  const { permissions } = useCurrentOrg();
+  return (permissions & permission) === permission;
 }
 
 // Usage in a component
 function EventManagementPage() {
-  const canManage = usePermission('CanManageEvents');
+  const canManage = usePermission(Permission.CanManageEvents);
   if (!canManage) return <Forbidden />;
   // ...
 }

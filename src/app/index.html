@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Auth Test</title>
 
+    <script src="config.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.js"></script>
@@ -142,12 +143,7 @@
     </div>
 
     <script>
-      // Firebase config — replace with your project's values
-      firebase.initializeApp({
-        apiKey: "AIzaSyBlGC3IMAdL_57NIM4adU_7eZVq9JYWHbA",
-        authDomain: "timbn-ticketing.firebaseapp.com",
-        projectId: "timbn-ticketing",
-      });
+      firebase.initializeApp(FIREBASE_CONFIG);
 
       // FirebaseUI config
       const ui = new firebaseui.auth.AuthUI(firebase.auth());

@@ -417,3 +417,4 @@ FodyWeavers.xsd
 *.msm
 *.msp
 /src/api/TimbnTicketing.Api/appsettings.Development.json
+/src/app/config.js

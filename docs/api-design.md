@@ -2,7 +2,7 @@
 
 ## Overview
 
-RESTful API built with .NET 10 Minimal APIs. All endpoints return JSON. Authentication is handled via Auth0 JWTs. Multi-tenancy is enforced by scoping all queries to the organization identified in the route.
+RESTful API built with .NET 10 Minimal APIs. All endpoints return JSON. Authentication is handled via Firebase JWTs. Multi-tenancy is enforced by scoping all queries to the organization identified in the route.
 
 Base URL: `https://api.yourplatform.com`
 
@@ -12,7 +12,7 @@ Base URL: `https://api.yourplatform.com`
 
 ### Authentication
 
-All endpoints except public event/ticket browsing require a valid Auth0 JWT in the `Authorization: Bearer {token}` header. The JWT contains the user's `AuthProviderId` (sub claim), which is resolved to the platform `UserId` on each request.
+All endpoints except public event/ticket browsing require a valid Firebase JWT in the `Authorization: Bearer {token}` header. The JWT contains the user's `AuthProviderId` (sub claim), which is resolved to the platform `UserId` on each request.
 
 ### Multi-Tenancy
 
@@ -123,19 +123,19 @@ app.MapGroup("/me")
 
 ### Auth
 
-Handles post-Auth0 callback logic. Auth0 manages the actual login flow — these endpoints handle platform-side user provisioning and token exchange.
+Handles post-authentication callback logic. Firebase manages the actual login flow — these endpoints handle platform-side user provisioning and token exchange.
 
 #### `POST /auth/callback`
 
-Called after Auth0 authentication. Creates or updates the platform User record from the Auth0 profile. Returns a platform session or token enriched with org memberships.
+Called after Firebase authentication. Creates or updates the platform User record from the Firebase profile. Returns a platform session or token enriched with org memberships.
 
-**Auth:** Public (called with Auth0 token)
+**Auth:** Public (called with Firebase token)
 
 **Request body:**
 
 ```json
 {
-  "auth0Token": "eyJhbGciOi..."
+  "firebaseToken": "eyJhbGciOi..."
 }
 ```
 
@@ -1579,7 +1579,7 @@ Request
   ├─ 1. Exception Handler
   ├─ 2. CORS
   ├─ 3. Rate Limiting
-  ├─ 4. Auth0 JWT Validation
+  ├─ 4. Firebase JWT Validation
   ├─ 5. Org Resolution (resolve orgSlug → OrganizationId, attach to HttpContext)
   ├─ 6. Membership Resolution (lookup UserOrganizations for current user + org)
   ├─ 7. Permission Filter (check role permission bit against endpoint requirement)
@@ -1625,7 +1625,7 @@ public static class PermissionExtensions
 
 ## Webhook Security
 
-Stripe webhooks are verified using the webhook signing secret. The endpoint does not use Auth0 JWT auth — it uses Stripe's signature verification instead.
+Stripe webhooks are verified using the webhook signing secret. The endpoint does not use Firebase JWT auth — it uses Stripe's signature verification instead.
 
 ```csharp
 app.MapPost("/orgs/{orgSlug}/events/{eventSlug}/orders/webhook", async (

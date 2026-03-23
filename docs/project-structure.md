@@ -211,7 +211,7 @@ The AppHost project references the Api project so Aspire can discover and launch
 | `Aspire.Hosting.SqlServer` | AppHost | SQL Server resource support |
 | `Aspire.Hosting.NodeJs` | AppHost | React dev server orchestration |
 | `Aspire.Microsoft.EntityFrameworkCore.SqlServer` | Infrastructure | Aspire-aware EF Core SQL Server integration |
-| `Microsoft.AspNetCore.Authentication.JwtBearer` | Api | Auth0 JWT validation |
+| `Microsoft.AspNetCore.Authentication.JwtBearer` | Api | Firebase JWT validation |
 | `Microsoft.EntityFrameworkCore` | Infrastructure | ORM |
 | `Microsoft.EntityFrameworkCore.SqlServer` | Infrastructure | SQL Server provider |
 | `Microsoft.Extensions.Http.Resilience` | ServiceDefaults | Retry, circuit breaker, timeout policies |
@@ -263,7 +263,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 | TanStack Query | Server state management, caching, mutations |
 | shadcn/ui | Component library (copy-paste, not a dependency) |
 | Tailwind CSS | Utility-first styling |
-| Auth0 React SDK | Authentication |
+| Firebase SDK | Authentication |
 
 ### Frontend Structure
 
@@ -287,7 +287,7 @@ src/web/
     │   ├── members.ts                          # Member search, metadata
     │   └── ...
     ├── hooks/                                  # Custom React hooks
-    │   ├── useAuth.ts                          # Auth0 wrapper
+    │   ├── useAuth.ts                          # Firebase auth wrapper
     │   ├── useCurrentOrg.ts                    # Current org context
     │   └── usePermission.ts                    # Check role permissions
     ├── components/                             # Reusable UI components
@@ -363,7 +363,7 @@ The `src/api/client.ts` file wraps `fetch` with auth token injection, base URL, 
 
 ```typescript
 // src/api/client.ts
-import { useAuth0 } from '@auth0/auth0-react';
+import { getAuth } from 'firebase/auth';
 
 const BASE_URL = import.meta.env.VITE_API_URL; // tickets.timbn.com/api/v1
 
@@ -397,7 +397,7 @@ Used with TanStack Query:
 ```typescript
 // src/api/events.ts
 export function useEvents(orgSlug: string) {
-  const { getAccessTokenSilently } = useAuth0();
+  const auth = getAuth();
 
   return useQuery({
     queryKey: ['events', orgSlug],
@@ -516,10 +516,7 @@ app.MapDefaultEndpoints(); // maps /health and /alive
   "ConnectionStrings": {
     "ticketing": "Server=(localdb)\\MSSQLLocalDB;Database=TimbnTicketing;Trusted_Connection=true;TrustServerCertificate=true"
   },
-  "Auth0": {
-    "Domain": "your-tenant.auth0.com",
-    "Audience": "https://tickets.timbn.com/api"
-  },
+  "FirebaseProjectId": "timbn-ticketing",
   "Stripe": {
     "SecretKey": "sk_test_...",
     "WebhookSecret": "whsec_...",
@@ -532,9 +529,9 @@ app.MapDefaultEndpoints(); // maps /health and /alive
 
 ```
 VITE_API_URL=http://localhost:5000/api/v1
-VITE_AUTH0_DOMAIN=your-tenant.auth0.com
-VITE_AUTH0_CLIENT_ID=your-client-id
-VITE_AUTH0_AUDIENCE=https://tickets.timbn.com/api
+VITE_FIREBASE_API_KEY=your-firebase-api-key
+VITE_FIREBASE_AUTH_DOMAIN=timbn-ticketing.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=timbn-ticketing
 ```
 
 Note: When running through Aspire, the API URL may be assigned dynamically. The `WithReference(api)` in the AppHost passes the API's endpoint to the web app as an environment variable. You can configure the React app to read from `services__api__https__0` (Aspire's service discovery format) or keep the explicit `VITE_API_URL` for simplicity during early development.
@@ -546,7 +543,7 @@ Note: When running through Aspire, the API URL may be assigned dynamically. The 
 | API | Azure App Service | B1 to start, scale as needed |
 | Web dashboard | Azure Static Web Apps | Free tier (generous for SPAs) |
 | Database | Azure SQL Database | Serverless (scales to zero, pay per use) |
-| Auth | Auth0 | Free tier (up to 7,500 active users) |
+| Auth | Firebase Authentication | Free tier (unlimited email/password, 10k/month for phone) |
 | Payments | Stripe Connect | Pay as you go |
 | DNS | Azure DNS or Cloudflare | `tickets.timbn.com` |
 

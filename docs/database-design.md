@@ -4,7 +4,7 @@
 
 This document defines the database schema for a multi-tenant event ticketing platform. The platform allows multiple organizations to manage events, sell tickets via Stripe Connect, and check in attendees via QR code. Each organization can define custom user profile fields (e.g., KCGameOn requires usernames) without schema changes.
 
-Authentication is handled externally by Auth0. The `AuthProviderId` on the Users table stores the Auth0 user identifier.
+Authentication is handled externally by Firebase. The `AuthProviderId` on the Users table stores the Firebase user identifier.
 
 ---
 
@@ -29,12 +29,12 @@ The top-level tenant. Every event, ticket type, and custom metadata field belong
 
 ### Users
 
-Core identity. Auth credentials live in Auth0 — this table holds profile data and the link to Auth0.
+Core identity. Auth credentials live in Firebase — this table holds profile data and the link to Firebase.
 
 | Column         | Type             | Constraints                           | Notes                           |
 | -------------- | ---------------- | ------------------------------------- | ------------------------------- |
 | Id             | UNIQUEIDENTIFIER | PK                                    |                                 |
-| AuthProviderId | NVARCHAR(255)    | NOT NULL, UNIQUE                      | Auth0 user ID (`auth0\|abc123`) |
+| AuthProviderId | NVARCHAR(255)    | NOT NULL, UNIQUE                      | Firebase UID |
 | Email          | NVARCHAR(255)    | NOT NULL, UNIQUE                      |                                 |
 | FirstName      | NVARCHAR(100)    | NOT NULL                              |                                 |
 | LastName       | NVARCHAR(100)    | NOT NULL                              |                                 |
@@ -428,7 +428,7 @@ All monetary values are stored as integers in cents to avoid floating-point prec
 
 ## Migration Notes (KCGameOn)
 
-- User accounts are migrated via Auth0 automatic migration (lazy migration on login)
+- User accounts are migrated via Firebase import (using Firebase Admin SDK bulk import)
 - The old `useraccount.Username` field becomes a `UserOrganizationMetadataValue` with `metadata_name = 'username'` under the KCGameOn organization
 - Gaming handles (`SteamHandle`, `DiscordAccount`, `PSN_ID`, etc.) each become separate metadata fields defined by KCGameOn
 - Old `payTable` and `checkIn` data should be archived, not migrated — new events use the new schema

@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
   <Project Path="TimbnTicketing.Api/TimbnTicketing.Api.csproj" />
   <Project Path="TimbnTicketing.AppHost/TimbnTicketing.AppHost.csproj" />
   <Project Path="TimbnTicketing.Core/TimbnTicketing.Core.csproj" />

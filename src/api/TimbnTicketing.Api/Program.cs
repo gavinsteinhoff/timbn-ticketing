@@ -15,6 +15,9 @@ builder.AddServiceDefaults();
 builder.Services.AddDbContext<PlatformDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Ticketing")));
 
+if (builder.Environment.IsDevelopment())
+    builder.Services.AddHostedService<DevelopmentDataSeeder>();
+
 var firebaseProjectId = builder.Configuration["Auth:FirebaseProjectId"]!;
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -33,7 +36,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<CurrentUserContext>();
-
 builder.Services.AddScoped<OrganizationService>();
 builder.Services.AddScoped<CurrentUserService>();
 

@@ -14,6 +14,7 @@ public static class OrganizationEndpoints
         group.MapPost("/", HandleCreateOrganization);
 
         group.MapGet("/{orgSlug}", HandleGetOrganization)
+            .AllowAnonymous()
             .WithName("GetOrganization")
             .WithSummary("Get an organization by slug")
             .Produces<OrganizationResponse>()
@@ -36,9 +37,7 @@ public static class OrganizationEndpoints
     private static async Task<IResult> HandleGetOrganization(string orgSlug, OrganizationService organizationService, CurrentRequestContext requestContext)
     {
         if (!requestContext.CanViewOrg)
-        {
-            return Results.Json(new { error = new { code = "NOT_A_MEMBER" } }, statusCode: StatusCodes.Status403Forbidden);
-        }
+            return Results.NotFound();
 
         var org = await organizationService.GetBySlugAsync(orgSlug);
 

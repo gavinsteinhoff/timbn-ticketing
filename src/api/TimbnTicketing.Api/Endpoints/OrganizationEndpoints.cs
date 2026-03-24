@@ -33,9 +33,9 @@ public static class OrganizationEndpoints
 
     private static Task<IResult> HandleCreateOrganization() => throw new NotImplementedException();
 
-    private static async Task<IResult> HandleGetOrganization(string orgSlug, OrganizationService organizationService, CurrentUserContext userContext)
+    private static async Task<IResult> HandleGetOrganization(string orgSlug, OrganizationService organizationService, CurrentRequestContext requestContext)
     {
-        if (!userContext.CanViewOrg)
+        if (!requestContext.CanViewOrg)
         {
             return Results.Json(new { error = new { code = "NOT_A_MEMBER" } }, statusCode: StatusCodes.Status403Forbidden);
         }

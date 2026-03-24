@@ -11,6 +11,8 @@ public class EventTicketConfiguration : IEntityTypeConfiguration<EventTicket>
         builder.HasKey(e => e.Id);
 
         builder.Property(e => e.IsActive).HasDefaultValue(true);
+        builder.Property(e => e.StripeProductId).HasMaxLength(255);
+        builder.Property(e => e.StripePriceId).HasMaxLength(255);
         builder.Property(e => e.CreatedAt).HasDefaultValueSql("SYSDATETIMEOFFSET()");
 
         builder.HasOne(e => e.Event)

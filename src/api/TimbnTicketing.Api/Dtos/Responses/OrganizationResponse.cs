@@ -5,4 +5,5 @@ public record OrganizationResponse(
     string Name,
     string Slug,
     string? LogoUrl,
-    string? WebsiteUrl);
+    string? WebsiteUrl,
+    List<EventSummaryResponse> Events);

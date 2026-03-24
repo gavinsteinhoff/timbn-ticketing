@@ -6,9 +6,9 @@ public class MembershipEndpointFilter : IEndpointFilter
 {
     public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
-        var userContext = context.HttpContext.RequestServices.GetRequiredService<CurrentUserContext>();
+        var requestContext = context.HttpContext.RequestServices.GetRequiredService<CurrentRequestContext>();
 
-        if (!userContext.IsMember)
+        if (!requestContext.IsMember)
         {
             return Results.Json(new { error = new { code = "NOT_A_MEMBER" } }, statusCode: StatusCodes.Status403Forbidden);
         }
@@ -21,14 +21,14 @@ public class PermissionEndpointFilter(Permission permission) : IEndpointFilter
 {
     public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
-        var userContext = context.HttpContext.RequestServices.GetRequiredService<CurrentUserContext>();
+        var requestContext = context.HttpContext.RequestServices.GetRequiredService<CurrentRequestContext>();
 
-        if (!userContext.IsMember)
+        if (!requestContext.IsMember)
         {
             return Results.Json(new { error = new { code = "NOT_A_MEMBER" } }, statusCode: StatusCodes.Status403Forbidden);
         }
 
-        if (!userContext.HasPermission(permission))
+        if (!requestContext.HasPermission(permission))
         {
             return Results.Json(new { error = new { code = "INSUFFICIENT_PERMISSIONS" } }, statusCode: StatusCodes.Status403Forbidden);
         }

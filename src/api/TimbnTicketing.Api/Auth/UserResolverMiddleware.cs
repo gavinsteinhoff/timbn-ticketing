@@ -7,12 +7,12 @@ namespace TimbnTicketing.Api.Auth;
 
 /// <summary>
 /// Resolves the JWT "sub" claim (Firebase UID stored as AuthProviderId) to a platform UserId
-/// and populates the scoped CurrentUserContext for the request.
+/// and populates the scoped CurrentRequestContext for the request.
 /// Auto-provisions a User row on first authenticated API call using claims from the JWT.
 /// </summary>
 public class UserResolverMiddleware(RequestDelegate next)
 {
-    public async Task InvokeAsync(HttpContext context, PlatformDbContext db, CurrentUserContext userContext)
+    public async Task InvokeAsync(HttpContext context, PlatformDbContext db, CurrentRequestContext requestContext)
     {
         if (context.User.Identity?.IsAuthenticated == true)
         {
@@ -32,8 +32,8 @@ public class UserResolverMiddleware(RequestDelegate next)
 
                 if (userId != Guid.Empty)
                 {
-                    userContext.UserId = userId;
-                    userContext.AuthProviderId = authProviderId;
+                    requestContext.UserId = userId;
+                    requestContext.AuthProviderId = authProviderId;
                 }
             }
         }

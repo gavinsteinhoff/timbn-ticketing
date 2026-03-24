@@ -1,5 +1,16 @@
+using Projects;
+using Scalar.Aspire;
+
 var builder = DistributedApplication.CreateBuilder(args);
 
-builder.AddProject<Projects.TimbnTicketing_Api>("timbnticketing-api");
+var api = builder
+    .AddProject<TimbnTicketing_Api>("timbnticketing-api");
+
+builder
+    .AddScalarApiReference(options =>
+    {
+        options.ForwardOriginalHostHeader();
+    })
+    .WithApiReference(api);
 
 builder.Build().Run();

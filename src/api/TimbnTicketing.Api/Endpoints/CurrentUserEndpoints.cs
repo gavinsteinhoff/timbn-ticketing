@@ -25,10 +25,10 @@ public static class CurrentUserEndpoints
     }
 
     private static async Task<IResult> HandleGetCurrentUser(
-        CurrentUserContext userContext,
+        CurrentRequestContext requestContext,
         CurrentUserService currentUserService)
     {
-        var user = await currentUserService.GetByIdAsync(userContext.UserId);
+        var user = await currentUserService.GetByIdAsync(requestContext.UserId);
 
         return user is not null
             ? Results.Ok(user)

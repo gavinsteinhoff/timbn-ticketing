@@ -95,8 +95,9 @@ Maps users to organizations with a role. Controls who can manage events, scan ti
 | Id             | UNIQUEIDENTIFIER | PK                                    |                                  |
 | UserId         | UNIQUEIDENTIFIER | FK → Users, NOT NULL                  |                                  |
 | OrganizationId | UNIQUEIDENTIFIER | FK → Organizations, NOT NULL          |                                  |
-| RoleId         | UNIQUEIDENTIFIER | FK → Roles, NOT NULL                  | References the org's Roles table |
-| CreatedAt      | DATETIMEOFFSET   | NOT NULL, DEFAULT SYSDATETIMEOFFSET() |                                  |
+| RoleId           | UNIQUEIDENTIFIER | FK → Roles, NOT NULL                  | References the org's Roles table                  |
+| StripeCustomerId | NVARCHAR(255)    | NULL                                  | Stripe Customer ID on the org's connected account |
+| CreatedAt        | DATETIMEOFFSET   | NOT NULL, DEFAULT SYSDATETIMEOFFSET() |                                                   |
 
 **Unique constraint:** `(UserId, OrganizationId)`
 
@@ -225,6 +226,8 @@ Event-specific ticket offerings. Links a TicketType to an Event with pricing and
 | SalesEndAt             | DATETIMEOFFSET   | NULLABLE                              | When sales close                                                          |
 | RequireAllDependencies | BIT              | NOT NULL, DEFAULT 0                   | FALSE = any one prerequisite is enough. TRUE = all prerequisites required |
 | IsActive               | BIT              | NOT NULL, DEFAULT 1                   |                                                                           |
+| StripeProductId        | NVARCHAR(255)    | NULLABLE                              | Stripe Product ID on the org's connected account                          |
+| StripePriceId          | NVARCHAR(255)    | NULLABLE                              | Stripe Price ID on the org's connected account                            |
 | CreatedAt              | DATETIMEOFFSET   | NOT NULL, DEFAULT SYSDATETIMEOFFSET() |                                                                           |
 
 ---

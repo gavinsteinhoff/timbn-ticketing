@@ -10,6 +10,7 @@ public class UserOrganizationConfiguration : IEntityTypeConfiguration<UserOrgani
     {
         builder.HasKey(e => e.Id);
 
+        builder.Property(e => e.StripeCustomerId).HasMaxLength(255);
         builder.Property(e => e.CreatedAt).HasDefaultValueSql("SYSDATETIMEOFFSET()");
 
         builder.HasIndex(e => new { e.UserId, e.OrganizationId }).IsUnique();

@@ -6,12 +6,12 @@ namespace TimbnTicketing.Api.Auth;
 
 public class MembershipResolutionMiddleware(RequestDelegate next)
 {
-    public async Task InvokeAsync(HttpContext context, PlatformDbContext db, CurrentUserContext userContext)
+    public async Task InvokeAsync(HttpContext context, PlatformDbContext db, CurrentRequestContext requestContext)
     {
-        if (userContext.IsOrgScoped && userContext.IsAuthenticated)
+        if (requestContext.IsOrgScoped && requestContext.IsAuthenticated)
         {
             var membership = await db.UserOrganizations
-                .Where(uo => uo.UserId == userContext.UserId && uo.OrganizationId == userContext.OrganizationId)
+                .Where(uo => uo.UserId == requestContext.UserId && uo.OrganizationId == requestContext.OrganizationId)
                 .Select(uo => new
                 {
                     uo.RoleId,
@@ -22,9 +22,9 @@ public class MembershipResolutionMiddleware(RequestDelegate next)
 
             if (membership is not null)
             {
-                userContext.RoleId = membership.RoleId;
-                userContext.RoleHierarchy = membership.Hierarchy;
-                userContext.GrantPermissions(membership.Permissions);
+                requestContext.RoleId = membership.RoleId;
+                requestContext.RoleHierarchy = membership.Hierarchy;
+                requestContext.GrantPermissions(membership.Permissions);
             }
         }
 

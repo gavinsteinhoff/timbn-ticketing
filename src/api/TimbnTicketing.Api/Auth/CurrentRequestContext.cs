@@ -3,11 +3,10 @@ using TimbnTicketing.Core;
 namespace TimbnTicketing.Api.Auth;
 
 /// <summary>
-/// Scoped service that holds the authenticated user's platform ID,
-/// resolved from the JWT "sub" claim (AuthProviderId) during authentication.
-/// Also holds org context and permissions resolved by middleware.
+/// Scoped service that holds request-level context resolved by middleware:
+/// authenticated user identity, org context, event context, and permissions.
 /// </summary>
-public class CurrentUserContext
+public class CurrentRequestContext
 {
     private Permission _permissions = Permission.None;
 
@@ -19,11 +18,15 @@ public class CurrentUserContext
     public Guid? OrganizationId { get; set; }
     public bool IsOrgPublic { get; set; }
 
+    // Set by EventResolutionMiddleware
+    public Guid? EventId { get; set; }
+
     // Set by MembershipResolutionMiddleware
     public Guid? RoleId { get; set; }
     public int? RoleHierarchy { get; set; }
 
     public bool IsOrgScoped => OrganizationId.HasValue;
+    public bool IsEventScoped => EventId.HasValue;
     public bool IsMember => RoleId.HasValue;
     public bool CanViewOrg => IsMember || IsOrgPublic;
 

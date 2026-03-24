@@ -11,6 +11,8 @@ public class EventTicket
     public DateTimeOffset? SalesEndAt { get; set; }
     public bool RequireAllDependencies { get; set; }
     public bool IsActive { get; set; } = true;
+    public string? StripeProductId { get; set; }
+    public string? StripePriceId { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 
     public Event Event { get; set; } = null!;

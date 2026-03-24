@@ -5,7 +5,7 @@ namespace TimbnTicketing.Api.Auth;
 
 public class OrgResolutionMiddleware(RequestDelegate next)
 {
-    public async Task InvokeAsync(HttpContext context, PlatformDbContext db, CurrentUserContext userContext)
+    public async Task InvokeAsync(HttpContext context, PlatformDbContext db, CurrentRequestContext requestContext)
     {
         var orgSlug = context.GetRouteValue("orgSlug")?.ToString();
 
@@ -24,8 +24,8 @@ public class OrgResolutionMiddleware(RequestDelegate next)
                 return;
             }
 
-            userContext.OrganizationId = org.Id;
-            userContext.IsOrgPublic = org.IsPublic;
+            requestContext.OrganizationId = org.Id;
+            requestContext.IsOrgPublic = org.IsPublic;
         }
 
         await next(context);

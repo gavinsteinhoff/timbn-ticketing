@@ -69,7 +69,7 @@ All database queries must be scoped to OrganizationId to prevent cross-tenant da
 - Firebase JWTs for authentication
 - Bitwise permissions (Discord-style): Role entity stores a single `Permission Permissions` field (backed by `bigint`). The `Permission` enum is `[Flags] : long` with power-of-2 values (`1L << 0` through `1L << 6`). New permissions are added by appending the next bit shift — positions must never be reused or reordered.
 - Role hierarchy: lower number = higher privilege. Users can only manage roles with higher hierarchy numbers than their own.
-- `CurrentUserContext` holds a `Permission` flags field; `HasPermission()` uses `HasFlag()` (single AND instruction)
+- `CurrentRequestContext` holds a `Permission` flags field; `HasPermission()` uses `HasFlag()` (single AND instruction)
 - Endpoints use `RequirePermission("CanXxx")` extension which triggers `PermissionEndpointFilter`
 
 ### Key Domain Concepts
@@ -91,6 +91,16 @@ All database queries must be scoped to OrganizationId to prevent cross-tenant da
 | JSON fields | camelCase (auto) | `checkedInAt` |
 | Endpoint files | `{Resource}Endpoints.cs` | `OrderEndpoints.cs` |
 | Service files | `{Service}Service.cs` | `TicketClaimService.cs` |
+
+## Endpoint Conventions
+
+When implementing or modifying Minimal API endpoints, **always** include full OpenAPI metadata:
+- `.WithName("OperationName")` — unique operation ID
+- `.WithSummary("Short description")` — one-line summary
+- `.WithDescription("...")` — detailed description when non-obvious
+- `.Accepts<TRequest>("application/json")` — for endpoints with request bodies
+- `.Produces<TResponse>(statusCode)` — for each success response
+- `.ProducesProblem(statusCode)` — for each error response
 
 ## Design Documentation
 

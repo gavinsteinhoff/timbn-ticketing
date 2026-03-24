@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TimbnTicketing.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using TimbnTicketing.Infrastructure.Data;
 namespace TimbnTicketing.Infrastructure.Migrations
 {
     [DbContext(typeof(PlatformDbContext))]
-    partial class PlatformDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260323222059_AddStripeCustomerIdToUserOrganization")]
+    partial class AddStripeCustomerIdToUserOrganization
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -192,14 +195,6 @@ namespace TimbnTicketing.Infrastructure.Migrations
 
                     b.Property<DateTimeOffset?>("SalesStartAt")
                         .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("StripePriceId")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("StripeProductId")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
 
                     b.Property<Guid>("TicketTypeId")
                         .HasColumnType("uniqueidentifier");

@@ -2,11 +2,13 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
-using Scalar.AspNetCore;
+using Stripe;
 using TimbnTicketing.Api.Auth;
 using TimbnTicketing.Api.Endpoints;
 using TimbnTicketing.Api.Services;
+using TimbnTicketing.Core.Interfaces;
 using TimbnTicketing.Infrastructure.Data;
+using TimbnTicketing.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,9 +37,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
-builder.Services.AddScoped<CurrentUserContext>();
+builder.Services.AddScoped<CurrentRequestContext>();
 builder.Services.AddScoped<OrganizationService>();
 builder.Services.AddScoped<CurrentUserService>();
+builder.Services.AddScoped<EventTicketService>();
+builder.Services.AddScoped<IStripeProductService, StripeProductService>();
+
+StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
+StripeConfiguration.EnableTelemetry = false;
 
 builder.Services.AddOpenApi(options =>
 {
@@ -57,6 +64,7 @@ builder.Services.AddOpenApi(options =>
         {
             [new OpenApiSecuritySchemeReference("Bearer", document)] = [],
         });
+
         return Task.CompletedTask;
     });
 });
@@ -68,10 +76,6 @@ app.MapDefaultEndpoints();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.MapScalarApiReference(options =>
-    {
-        options.AddPreferredSecuritySchemes("Bearer");
-    });
 }
 
 app.UseHttpsRedirection();
@@ -80,6 +84,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<UserResolverMiddleware>();
 app.UseMiddleware<OrgResolutionMiddleware>();
+app.UseMiddleware<EventResolutionMiddleware>();
 app.UseMiddleware<MembershipResolutionMiddleware>();
 
 // Auth (public — no JWT required)

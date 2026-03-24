@@ -416,5 +416,5 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
-/src/api/TimbnTicketing.Api/appsettings.Development.json
 /src/app/config.js
+**/appsettings.Development.json

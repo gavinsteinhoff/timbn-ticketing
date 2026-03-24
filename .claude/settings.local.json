@@ -18,7 +18,15 @@
       "Bash(npm install:*)",
       "Bash(dotnet ef:*)",
       "Bash(find /c/Users/gavin/source/repos/Timbn/timbn-ticketing/src/api -name *eed* -o -name *ata* -type f)",
-      "Bash(find . -name appsettings*.json -o -name *.env*)"
+      "Bash(find . -name appsettings*.json -o -name *.env*)",
+      "Bash(aspire start:*)",
+      "Bash(aspire describe:*)",
+      "Bash(aspire stop:*)",
+      "Bash(ls C:/Users/gavin/source/repos/Timbn/timbn-ticketing/src/api/TimbnTicketing.AppHost/appsettings*.json)"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "aspire"
+  ]
 }

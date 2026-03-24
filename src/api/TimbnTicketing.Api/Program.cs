@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Stripe;
@@ -14,8 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-builder.Services.AddDbContext<PlatformDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("Ticketing")));
+builder.AddSqlServerDbContext<PlatformDbContext>("Ticketing");
 
 if (builder.Environment.IsDevelopment())
     builder.Services.AddHostedService<DevelopmentDataSeeder>();

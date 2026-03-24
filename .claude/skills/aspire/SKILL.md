@@ -10,7 +10,7 @@ This repository uses Aspire to orchestrate its distributed application. Resource
 ## CLI command reference
 
 | Task | Command |
-|---|---|
+| --- | --- |
 | Start the app | `aspire start` |
 | Start isolated (worktrees) | `aspire start --isolated` |
 | Restart the app | `aspire start` (stops previous automatically) |
@@ -18,7 +18,7 @@ This repository uses Aspire to orchestrate its distributed application. Resource
 | Stop the app | `aspire stop` |
 | List resources | `aspire describe` or `aspire resources` |
 | Run resource command | `aspire resource <resource> <command>` |
-| Start/stop/restart resource | `aspire resource <resource> start|stop|restart` |
+| Start/stop/restart resource | `aspire resource <resource> start\stop\restart` |
 | View console logs | `aspire logs [resource]` |
 | View structured logs | `aspire otel logs [resource]` |
 | View traces | `aspire otel traces [resource]` |

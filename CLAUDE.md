@@ -45,7 +45,7 @@ Health endpoints: `/health` (readiness), `/alive` (liveness)
 
 ### Dependency Flow
 
-```
+```text
 AppHost → Api, ServiceDefaults
 Api → Core, Infrastructure, ServiceDefaults
 Infrastructure → Core
@@ -57,6 +57,7 @@ Core defines interfaces; Infrastructure implements them. This keeps domain logic
 ### Multi-Tenancy Pattern
 
 All API routes are scoped by `{orgSlug}`. Two middleware components resolve context:
+
 1. `OrgResolutionMiddleware` — resolves slug → OrganizationId
 2. `MembershipResolutionMiddleware` — resolves user + org → role
 
@@ -81,7 +82,7 @@ All database queries must be scoped to OrganizationId to prevent cross-tenant da
 ## Naming Conventions
 
 | Item | Convention | Example |
-|------|-----------|---------|
+| --- | --- | --- |
 | C# properties | PascalCase | `EventTicketId` |
 | DB tables | PascalCase, plural | `EventTickets` |
 | DB columns | PascalCase | `CheckedInAt` |
@@ -93,6 +94,7 @@ All database queries must be scoped to OrganizationId to prevent cross-tenant da
 ## Endpoint Conventions
 
 When implementing or modifying Minimal API endpoints, **always** include full OpenAPI metadata:
+
 - `.WithName("OperationName")` — unique operation ID
 - `.WithSummary("Short description")` — one-line summary
 - `.WithDescription("...")` — detailed description when non-obvious
@@ -103,6 +105,7 @@ When implementing or modifying Minimal API endpoints, **always** include full Op
 ## Design Documentation
 
 Comprehensive design docs exist in `/docs/`:
+
 - `project-structure.md` — Full planned project layout, dependency graph, frontend structure, deployment plan
 - `api-design.md` — REST API patterns, all endpoints, auth, pagination, error handling
 - `database-design.md` — Schema definitions, relationships, design decisions

@@ -10,7 +10,7 @@ Repository: `github.com/timbn/timbn-ticketing`
 
 ## Repository Layout
 
-```
+```text
 timbn-ticketing/
 ├── README.md
 ├── LICENSE                                     # AGPLv3
@@ -47,7 +47,7 @@ timbn-ticketing/
 
 All .NET projects live under `src/api/`. The solution file is at `src/api/TimbnTicketing.sln`.
 
-```
+```text
 src/api/
 ├── TimbnTicketing.sln
 │
@@ -175,7 +175,7 @@ src/api/
 
 ### Project Dependencies
 
-```
+```text
 TimbnTicketing.AppHost
   ├── references → TimbnTicketing.Api (orchestrates it)
   └── references → TimbnTicketing.ServiceDefaults
@@ -207,7 +207,7 @@ The AppHost project references the Api project so Aspire can discover and launch
 ### Key NuGet Packages
 
 | Package | Project | Purpose |
-|---------|---------|---------|
+| --- | --- | --- |
 | `Aspire.Hosting` | AppHost | Aspire orchestration |
 | `Aspire.Hosting.SqlServer` | AppHost | SQL Server resource support |
 | `Aspire.Hosting.NodeJs` | AppHost | React dev server orchestration |
@@ -226,7 +226,7 @@ The AppHost project references the Api project so Aspire can discover and launch
 ### Naming Conventions
 
 | Item | Convention | Example |
-|------|-----------|---------|
+| --- | --- | --- |
 | Entities | PascalCase, singular | `EventTicket`, `UserOrganization` |
 | DB tables | PascalCase, plural | `EventTickets`, `UserOrganizations` |
 | DB columns | PascalCase | `CheckedInAt`, `StripeConnectAccountId` |
@@ -256,7 +256,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 ### Stack
 
 | Tool | Purpose |
-|------|---------|
+| --- | --- |
 | React 19 | UI framework |
 | TypeScript | Type safety |
 | Vite | Dev server and bundler |
@@ -268,7 +268,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 
 ### Frontend Structure
 
-```
+```text
 src/web/
 ├── package.json
 ├── tsconfig.json
@@ -338,7 +338,7 @@ src/web/
 The frontend routes mirror the API's org-scoped structure:
 
 | Route | Page | Auth |
-|-------|------|------|
+| --- | --- | --- |
 | `/:orgSlug` | Event list (public) | No |
 | `/:orgSlug/events/:eventSlug` | Event detail + ticket selection | No |
 | `/:orgSlug/events/:eventSlug/checkout` | Checkout flow | Yes |
@@ -364,17 +364,17 @@ The `src/api/client.ts` file wraps `fetch` with auth token injection, base URL, 
 
 ```typescript
 // src/api/client.ts
-import { getAuth } from 'firebase/auth';
+import { getAuth } from "firebase/auth";
 
 const BASE_URL = import.meta.env.VITE_API_URL; // tickets.timbn.com/api/v1
 
 export async function apiClient<T>(
   path: string,
   options: RequestInit = {},
-  token?: string
+  token?: string,
 ): Promise<T> {
   const headers: HeadersInit = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
     ...(token && { Authorization: `Bearer ${token}` }),
     ...options.headers,
   };
@@ -401,14 +401,10 @@ export function useEvents(orgSlug: string) {
   const auth = getAuth();
 
   return useQuery({
-    queryKey: ['events', orgSlug],
+    queryKey: ["events", orgSlug],
     queryFn: async () => {
       const token = await getAccessTokenSilently();
-      return apiClient<EventListResponse>(
-        `/orgs/${orgSlug}/events`,
-        {},
-        token
-      );
+      return apiClient<EventListResponse>(`/orgs/${orgSlug}/events`, {}, token);
     },
   });
 }
@@ -525,7 +521,7 @@ app.MapDefaultEndpoints(); // maps /health and /alive
 
 **Web (`src/web/.env.local`):**
 
-```
+```text
 VITE_API_URL=http://localhost:5000/api/v1
 VITE_FIREBASE_API_KEY=your-firebase-api-key
 VITE_FIREBASE_AUTH_DOMAIN=timbn-ticketing.firebaseapp.com
@@ -537,7 +533,7 @@ Note: When running through Aspire, the API URL may be assigned dynamically. The 
 ### Azure Hosting Plan
 
 | Service | Azure Resource | Tier |
-|---------|---------------|------|
+| --- | --- | --- |
 | API | Azure App Service | B1 to start, scale as needed |
 | Web dashboard | Azure Static Web Apps | Free tier (generous for SPAs) |
 | Database | Azure SQL Database | Serverless (scales to zero, pay per use) |

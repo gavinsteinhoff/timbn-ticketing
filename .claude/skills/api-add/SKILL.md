@@ -11,6 +11,7 @@ Follow these steps in order:
 ## 1. Consult the design docs
 
 Read the relevant sections of these docs to understand the intended endpoint shape, request/response format, and database schema:
+
 - `docs/api-design.md` — endpoint routes, HTTP methods, request/response contracts
 - `docs/database-design.md` — entity relationships and column definitions
 
@@ -44,6 +45,7 @@ Read the relevant sections of these docs to understand the intended endpoint sha
 ## 6. Add OpenAPI metadata
 
 On the endpoint's `Map{Method}` call, chain:
+
 - `.WithName("{ActionResource}")` — operation ID
 - `.WithSummary("...")` — short description
 - `.Produces<{ResponseDto}>()` — for success responses

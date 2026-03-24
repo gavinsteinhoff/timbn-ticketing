@@ -14,16 +14,16 @@ Authentication is handled externally by Firebase. The `AuthProviderId` on the Us
 
 The top-level tenant. Every event, ticket type, and custom metadata field belongs to an organization.
 
-| Column                 | Type             | Constraints                           | Notes                                             |
-| ---------------------- | ---------------- | ------------------------------------- | ------------------------------------------------- |
-| Id                     | UNIQUEIDENTIFIER | PK                                    |                                                   |
-| Name                   | NVARCHAR(100)    | NOT NULL                              | Display name                                      |
-| Slug                   | NVARCHAR(100)    | NOT NULL, UNIQUE                      | URL-safe identifier, e.g. `kcgameon`              |
-| StripeConnectAccountId | NVARCHAR(255)    | NULLABLE                              | Stripe connected account ID, null until onboarded |
-| LogoUrl                | NVARCHAR(500)    | NULLABLE                              |                                                   |
-| WebsiteUrl             | NVARCHAR(500)    | NULLABLE                              |                                                   |
-| CreatedAt              | DATETIMEOFFSET   | NOT NULL, DEFAULT SYSDATETIMEOFFSET() |                                                   |
-| UpdatedAt              | DATETIMEOFFSET   | NOT NULL, DEFAULT SYSDATETIMEOFFSET() |                                                   |
+| Column | Type | Constraints | Notes |
+| --- | --- | --- | --- |
+| Id | UNIQUEIDENTIFIER | PK | |
+| Name | NVARCHAR(100) | NOT NULL | Display name |
+| Slug | NVARCHAR(100) | NOT NULL, UNIQUE | URL-safe identifier, e.g. `kcgameon` |
+| StripeConnectAccountId | NVARCHAR(255) | NULLABLE | Stripe connected account ID, null until onboarded |
+| LogoUrl | NVARCHAR(500) | NULLABLE | |
+| WebsiteUrl | NVARCHAR(500) | NULLABLE | |
+| CreatedAt | DATETIMEOFFSET | NOT NULL, DEFAULT SYSDATETIMEOFFSET() | |
+| UpdatedAt | DATETIMEOFFSET | NOT NULL, DEFAULT SYSDATETIMEOFFSET() | |
 
 ---
 
@@ -31,15 +31,15 @@ The top-level tenant. Every event, ticket type, and custom metadata field belong
 
 Core identity. Auth credentials live in Firebase — this table holds profile data and the link to Firebase.
 
-| Column         | Type             | Constraints                           | Notes                           |
-| -------------- | ---------------- | ------------------------------------- | ------------------------------- |
-| Id             | UNIQUEIDENTIFIER | PK                                    |                                 |
-| AuthProviderId | NVARCHAR(255)    | NOT NULL, UNIQUE                      | Firebase UID |
-| Email          | NVARCHAR(255)    | NOT NULL, UNIQUE                      |                                 |
-| FirstName      | NVARCHAR(100)    | NOT NULL                              |                                 |
-| LastName       | NVARCHAR(100)    | NOT NULL                              |                                 |
-| CreatedAt      | DATETIMEOFFSET   | NOT NULL, DEFAULT SYSDATETIMEOFFSET() |                                 |
-| UpdatedAt      | DATETIMEOFFSET   | NOT NULL, DEFAULT SYSDATETIMEOFFSET() |                                 |
+| Column | Type | Constraints | Notes |
+| --- | --- | --- | --- |
+| Id | UNIQUEIDENTIFIER | PK | |
+| AuthProviderId | NVARCHAR(255) | NOT NULL, UNIQUE | Firebase UID |
+| Email | NVARCHAR(255) | NOT NULL, UNIQUE | |
+| FirstName | NVARCHAR(100) | NOT NULL | |
+| LastName | NVARCHAR(100) | NOT NULL | |
+| CreatedAt | DATETIMEOFFSET | NOT NULL, DEFAULT SYSDATETIMEOFFSET() | |
+| UpdatedAt | DATETIMEOFFSET | NOT NULL, DEFAULT SYSDATETIMEOFFSET() | |
 
 ---
 
@@ -47,28 +47,28 @@ Core identity. Auth credentials live in Firebase — this table holds profile da
 
 Organization-defined roles for access control. Each org can create whatever roles make sense for them. Permissions use a bitwise flags pattern (Discord-style) — a single `BIGINT` column where each bit represents a permission. New permissions are added by appending the next bit position; positions must never be reused or reordered. The `hierarchy` column enforces a pecking order: users with `CanManageRoles` can only create, edit, or assign roles with a **higher** hierarchy number (lower privilege) than their own.
 
-| Column         | Type             | Constraints                           | Notes                                                            |
-| -------------- | ---------------- | ------------------------------------- | ---------------------------------------------------------------- |
-| Id             | UNIQUEIDENTIFIER | PK                                    |                                                                  |
-| OrganizationId | UNIQUEIDENTIFIER | FK → Organizations, NOT NULL          |                                                                  |
-| Name           | NVARCHAR(100)    | NOT NULL                              | Display name, e.g. `Admin`, `Volunteer`, `Moderator`             |
-| Slug           | NVARCHAR(100)    | NOT NULL                              | Code-safe identifier, e.g. `admin`, `volunteer`                  |
-| Hierarchy      | INT              | NOT NULL, DEFAULT 100                 | Lower number = higher privilege. Used to restrict role management |
-| IsDefault      | BIT              | NOT NULL, DEFAULT 0                   | Auto-assigned to new members of this org                         |
-| Permissions    | BIGINT           | NOT NULL, DEFAULT 0                   | Bitwise permission flags (see Permission Bits below)             |
-| CreatedAt      | DATETIMEOFFSET   | NOT NULL, DEFAULT SYSDATETIMEOFFSET() |                                                                  |
+| Column | Type | Constraints | Notes |
+| --- | --- | --- | --- |
+| Id | UNIQUEIDENTIFIER | PK | |
+| OrganizationId | UNIQUEIDENTIFIER | FK → Organizations, NOT NULL | |
+| Name | NVARCHAR(100) | NOT NULL | Display name, e.g. `Admin`, `Volunteer`, `Moderator` |
+| Slug | NVARCHAR(100) | NOT NULL | Code-safe identifier, e.g. `admin`, `volunteer` |
+| Hierarchy | INT | NOT NULL, DEFAULT 100 | Lower number = higher privilege. Used to restrict role management |
+| IsDefault | BIT | NOT NULL, DEFAULT 0 | Auto-assigned to new members of this org |
+| Permissions | BIGINT | NOT NULL, DEFAULT 0 | Bitwise permission flags (see Permission Bits below) |
+| CreatedAt | DATETIMEOFFSET | NOT NULL, DEFAULT SYSDATETIMEOFFSET() | |
 
 **Permission Bits:**
 
-| Bit | Value | Permission            | Description                                                   |
-| --- | ----- | --------------------- | ------------------------------------------------------------- |
-| 0   | 1     | CanManageOrganization | Edit org branding, description, settings                      |
-| 1   | 2     | CanCreateEvents       | Create new events                                             |
-| 2   | 4     | CanManageEvents       | Edit/delete existing events and ticket types                  |
-| 3   | 8     | CanManageRoles        | Create/edit/assign roles with higher hierarchy than own role  |
-| 4   | 16    | CanManageBilling      | Stripe Connect, view financials                               |
-| 5   | 32    | CanCheckin            | Scan QR codes at the door                                     |
-| 6   | 64    | CanViewAttendees      | View attendee lists and sales                                 |
+| Bit | Value | Permission | Description |
+| --- | --- | --- | --- |
+| 0 | 1 | CanManageOrganization | Edit org branding, description, settings |
+| 1 | 2 | CanCreateEvents | Create new events |
+| 2 | 4 | CanManageEvents | Edit/delete existing events and ticket types |
+| 3 | 8 | CanManageRoles | Create/edit/assign roles with higher hierarchy than own role |
+| 4 | 16 | CanManageBilling | Stripe Connect, view financials |
+| 5 | 32 | CanCheckin | Scan QR codes at the door |
+| 6 | 64 | CanViewAttendees | View attendee lists and sales |
 
 **Unique constraint:** `(OrganizationId, Slug)`
 
@@ -76,13 +76,13 @@ Organization-defined roles for access control. Each org can create whatever role
 
 **Example roles for KCGameOn:**
 
-| Name      | Slug      | Hierarchy | IsDefault | Permissions (decimal) | Permissions (flags)                                                                                    |
-| --------- | --------- | --------- | --------- | --------------------- | ------------------------------------------------------------------------------------------------------ |
-| Owner     | owner     | 0         | FALSE     | 127                   | All 7 permissions                                                                                      |
-| Admin     | admin     | 10        | FALSE     | 110                   | CanCreateEvents \| CanManageEvents \| CanManageRoles \| CanCheckin \| CanViewAttendees                 |
-| Moderator | moderator | 20        | FALSE     | 104                   | CanManageRoles \| CanCheckin \| CanViewAttendees                                                       |
-| Volunteer | volunteer | 50        | FALSE     | 32                    | CanCheckin                                                                                             |
-| Member    | member    | 100       | TRUE      | 0                     | None                                                                                                   |
+| Name | Slug | Hierarchy | IsDefault | Permissions (decimal) | Permissions (flags) |
+| --- | --- | --- | --- | --- | --- |
+| Owner | owner | 0 | FALSE | 127 | All 7 permissions |
+| Admin | admin | 10 | FALSE | 110 | CanCreateEvents \| CanManageEvents \| CanManageRoles \| CanCheckin \| CanViewAttendees |
+| Moderator | moderator | 20 | FALSE | 104 | CanManageRoles \| CanCheckin \| CanViewAttendees |
+| Volunteer | volunteer | 50 | FALSE | 32 | CanCheckin |
+| Member | member | 100 | TRUE | 0 | None |
 
 ---
 
@@ -90,14 +90,14 @@ Organization-defined roles for access control. Each org can create whatever role
 
 Maps users to organizations with a role. Controls who can manage events, scan tickets, view dashboards, etc. A user can belong to multiple organizations.
 
-| Column         | Type             | Constraints                           | Notes                            |
-| -------------- | ---------------- | ------------------------------------- | -------------------------------- |
-| Id             | UNIQUEIDENTIFIER | PK                                    |                                  |
-| UserId         | UNIQUEIDENTIFIER | FK → Users, NOT NULL                  |                                  |
-| OrganizationId | UNIQUEIDENTIFIER | FK → Organizations, NOT NULL          |                                  |
-| RoleId           | UNIQUEIDENTIFIER | FK → Roles, NOT NULL                  | References the org's Roles table                  |
-| StripeCustomerId | NVARCHAR(255)    | NULL                                  | Stripe Customer ID on the org's connected account |
-| CreatedAt        | DATETIMEOFFSET   | NOT NULL, DEFAULT SYSDATETIMEOFFSET() |                                                   |
+| Column | Type | Constraints | Notes |
+| --- | --- | --- | --- |
+| Id | UNIQUEIDENTIFIER | PK | |
+| UserId | UNIQUEIDENTIFIER | FK → Users, NOT NULL | |
+| OrganizationId | UNIQUEIDENTIFIER | FK → Organizations, NOT NULL | |
+| RoleId | UNIQUEIDENTIFIER | FK → Roles, NOT NULL | References the org's Roles table |
+| StripeCustomerId | NVARCHAR(255) | NULL | Stripe Customer ID on the org's connected account |
+| CreatedAt | DATETIMEOFFSET | NOT NULL, DEFAULT SYSDATETIMEOFFSET() | |
 
 **Unique constraint:** `(UserId, OrganizationId)`
 
@@ -107,15 +107,15 @@ Maps users to organizations with a role. Controls who can manage events, scan ti
 
 Defines custom profile fields an organization requires or allows. This is the "schema" for org-specific user data. For example, KCGameOn would create a row here for "Username" and another for "DiscordHandle."
 
-| Column         | Type             | Constraints                           | Notes                                             |
-| -------------- | ---------------- | ------------------------------------- | ------------------------------------------------- |
-| Id             | UNIQUEIDENTIFIER | PK                                    |                                                   |
-| OrganizationId | UNIQUEIDENTIFIER | FK → Organizations, NOT NULL          |                                                   |
-| MetadataName   | NVARCHAR(100)    | NOT NULL                              | Field name, e.g. `username`, `discord_handle`     |
-| DisplayLabel   | NVARCHAR(100)    | NOT NULL                              | Shown to users, e.g. `Username`, `Discord Handle` |
-| IsRequired     | BIT              | NOT NULL, DEFAULT 0                   | Must the user fill this in?                       |
-| IsPublic       | BIT              | NOT NULL, DEFAULT 0                   | Visible to other users (e.g., in raffles)         |
-| CreatedAt      | DATETIMEOFFSET   | NOT NULL, DEFAULT SYSDATETIMEOFFSET() |                                                   |
+| Column | Type | Constraints | Notes |
+| --- | --- | --- | --- |
+| Id | UNIQUEIDENTIFIER | PK | |
+| OrganizationId | UNIQUEIDENTIFIER | FK → Organizations, NOT NULL | |
+| MetadataName | NVARCHAR(100) | NOT NULL | Field name, e.g. `username`, `discord_handle` |
+| DisplayLabel | NVARCHAR(100) | NOT NULL | Shown to users, e.g. `Username`, `Discord Handle` |
+| IsRequired | BIT | NOT NULL, DEFAULT 0 | Must the user fill this in? |
+| IsPublic | BIT | NOT NULL, DEFAULT 0 | Visible to other users (e.g., in raffles) |
+| CreatedAt | DATETIMEOFFSET | NOT NULL, DEFAULT SYSDATETIMEOFFSET() | |
 
 **Unique constraint:** `(OrganizationId, MetadataName)`
 
@@ -125,24 +125,24 @@ Defines custom profile fields an organization requires or allows. This is the "s
 
 Stores actual values for the custom fields defined above. One row per user per field per org. This is the EAV value table.
 
-| Column         | Type             | Constraints                                 | Notes                           |
-| -------------- | ---------------- | ------------------------------------------- | ------------------------------- |
-| Id             | UNIQUEIDENTIFIER | PK                                          |                                 |
-| UserId         | UNIQUEIDENTIFIER | FK → Users, NOT NULL                        |                                 |
-| OrganizationId | UNIQUEIDENTIFIER | FK → Organizations, NOT NULL                |                                 |
-| MetadataInfoId | UNIQUEIDENTIFIER | FK → UserOrganizationMetadataInfo, NOT NULL |                                 |
-| MetadataValue  | NVARCHAR(500)    | NOT NULL                                    | The user's value for this field |
-| CreatedAt      | DATETIMEOFFSET   | NOT NULL, DEFAULT SYSDATETIMEOFFSET()       |                                 |
-| UpdatedAt      | DATETIMEOFFSET   | NOT NULL, DEFAULT SYSDATETIMEOFFSET()       |                                 |
+| Column | Type | Constraints | Notes |
+| --- | --- | --- | --- |
+| Id | UNIQUEIDENTIFIER | PK | |
+| UserId | UNIQUEIDENTIFIER | FK → Users, NOT NULL | |
+| OrganizationId | UNIQUEIDENTIFIER | FK → Organizations, NOT NULL | |
+| MetadataInfoId | UNIQUEIDENTIFIER | FK → UserOrganizationMetadataInfo, NOT NULL | |
+| MetadataValue | NVARCHAR(500) | NOT NULL | The user's value for this field |
+| CreatedAt | DATETIMEOFFSET | NOT NULL, DEFAULT SYSDATETIMEOFFSET() | |
+| UpdatedAt | DATETIMEOFFSET | NOT NULL, DEFAULT SYSDATETIMEOFFSET() | |
 
 **Unique constraint:** `(UserId, MetadataInfoId)`
 
 **Example rows for KCGameOn:**
 
-| UserId  | OrganizationId | MetadataInfoId   | MetadataValue |
-| ------- | -------------- | ---------------- | ------------- |
-| (alice) | (kcgameon)     | (username field) | FragMaster99  |
-| (alice) | (kcgameon)     | (discord field)  | frag#1234     |
+| UserId | OrganizationId | MetadataInfoId | MetadataValue |
+| --- | --- | --- | --- |
+| (alice) | (kcgameon) | (username field) | FragMaster99 |
+| (alice) | (kcgameon) | (discord field) | frag#1234 |
 
 ---
 
@@ -150,21 +150,21 @@ Stores actual values for the custom fields defined above. One row per user per f
 
 Reusable venue records scoped to an organization. Avoids retyping addresses and provides a single place to maintain venue-specific details.
 
-| Column         | Type             | Constraints                           | Notes                                    |
-| -------------- | ---------------- | ------------------------------------- | ---------------------------------------- |
-| Id             | UNIQUEIDENTIFIER | PK                                    |                                          |
-| OrganizationId | UNIQUEIDENTIFIER | FK → Organizations, NOT NULL          |                                          |
-| Name           | NVARCHAR(200)    | NOT NULL                              | e.g. `Bartle Hall`, `KCI Expo Center`    |
-| Address        | NVARCHAR(500)    | NOT NULL                              | Full street address                      |
-| City           | NVARCHAR(100)    | NULLABLE                              |                                          |
-| State          | NVARCHAR(50)     | NULLABLE                              |                                          |
-| Zip            | NVARCHAR(20)     | NULLABLE                              |                                          |
-| Notes          | NNVARCHAR(MAX)   | NULLABLE                              | Parking info, load-in instructions, etc. |
-| Capacity       | INT              | NULLABLE                              | Max attendees if known                   |
-| MapUrl         | NVARCHAR(500)    | NULLABLE                              | Floor plan or venue map image            |
-| WebsiteUrl     | NVARCHAR(500)    | NULLABLE                              |                                          |
-| CreatedAt      | DATETIMEOFFSET   | NOT NULL, DEFAULT SYSDATETIMEOFFSET() |                                          |
-| UpdatedAt      | DATETIMEOFFSET   | NOT NULL, DEFAULT SYSDATETIMEOFFSET() |                                          |
+| Column | Type | Constraints | Notes |
+| --- | --- | --- | --- |
+| Id | UNIQUEIDENTIFIER | PK | |
+| OrganizationId | UNIQUEIDENTIFIER | FK → Organizations, NOT NULL | |
+| Name | NVARCHAR(200) | NOT NULL | e.g. `Bartle Hall`, `KCI Expo Center` |
+| Address | NVARCHAR(500) | NOT NULL | Full street address |
+| City | NVARCHAR(100) | NULLABLE | |
+| State | NVARCHAR(50) | NULLABLE | |
+| Zip | NVARCHAR(20) | NULLABLE | |
+| Notes | NNVARCHAR(MAX) | NULLABLE | Parking info, load-in instructions, etc. |
+| Capacity | INT | NULLABLE | Max attendees if known |
+| MapUrl | NVARCHAR(500) | NULLABLE | Floor plan or venue map image |
+| WebsiteUrl | NVARCHAR(500) | NULLABLE | |
+| CreatedAt | DATETIMEOFFSET | NOT NULL, DEFAULT SYSDATETIMEOFFSET() | |
+| UpdatedAt | DATETIMEOFFSET | NOT NULL, DEFAULT SYSDATETIMEOFFSET() | |
 
 ---
 
@@ -172,25 +172,25 @@ Reusable venue records scoped to an organization. Avoids retyping addresses and 
 
 An event belonging to an organization. Replaces the old KCGameOn `Events` table.
 
-| Column           | Type             | Constraints                           | Notes                                         |
-| ---------------- | ---------------- | ------------------------------------- | --------------------------------------------- |
-| Id               | UNIQUEIDENTIFIER | PK                                    |                                               |
-| OrganizationId   | UNIQUEIDENTIFIER | FK → Organizations, NOT NULL          |                                               |
-| VenueId          | UNIQUEIDENTIFIER | FK → Venues, NULLABLE                 | NULL for virtual events                       |
-| Name             | NVARCHAR(200)    | NOT NULL                              |                                               |
-| Slug             | NVARCHAR(200)    | NOT NULL                              | URL-safe, unique per org                      |
-| Description      | NNVARCHAR(MAX)   | NULLABLE                              | Supports markdown or HTML                     |
-| ShortDescription | NVARCHAR(500)    | NULLABLE                              | Tagline / feature text                        |
-| StartsAt         | DATETIMEOFFSET   | NOT NULL                              |                                               |
-| EndsAt           | DATETIMEOFFSET   | NULLABLE                              |                                               |
-| BannerUrl        | NVARCHAR(500)    | NULLABLE                              |                                               |
-| AvatarUrl        | NVARCHAR(500)    | NULLABLE                              |                                               |
-| IsPublished      | BIT              | NOT NULL, DEFAULT 0                   | Replaces draft/active flags                   |
-| IsPrivate        | BIT              | NOT NULL, DEFAULT 0                   | Only accessible via direct link               |
-| CheckinStartsAt  | DATETIMEOFFSET   | NULLABLE                              | When QR check-in opens. NULL = no check-in    |
-| CheckinEndsAt    | DATETIMEOFFSET   | NULLABLE                              | When QR check-in closes. NULL = no auto-close |
-| CreatedAt        | DATETIMEOFFSET   | NOT NULL, DEFAULT SYSDATETIMEOFFSET() |                                               |
-| UpdatedAt        | DATETIMEOFFSET   | NOT NULL, DEFAULT SYSDATETIMEOFFSET() |                                               |
+| Column | Type | Constraints | Notes |
+| --- | --- | --- | --- |
+| Id | UNIQUEIDENTIFIER | PK | |
+| OrganizationId | UNIQUEIDENTIFIER | FK → Organizations, NOT NULL | |
+| VenueId | UNIQUEIDENTIFIER | FK → Venues, NULLABLE | NULL for virtual events |
+| Name | NVARCHAR(200) | NOT NULL | |
+| Slug | NVARCHAR(200) | NOT NULL | URL-safe, unique per org |
+| Description | NNVARCHAR(MAX) | NULLABLE | Supports markdown or HTML |
+| ShortDescription | NVARCHAR(500) | NULLABLE | Tagline / feature text |
+| StartsAt | DATETIMEOFFSET | NOT NULL | |
+| EndsAt | DATETIMEOFFSET | NULLABLE | |
+| BannerUrl | NVARCHAR(500) | NULLABLE | |
+| AvatarUrl | NVARCHAR(500) | NULLABLE | |
+| IsPublished | BIT | NOT NULL, DEFAULT 0 | Replaces draft/active flags |
+| IsPrivate | BIT | NOT NULL, DEFAULT 0 | Only accessible via direct link |
+| CheckinStartsAt | DATETIMEOFFSET | NULLABLE | When QR check-in opens. NULL = no check-in |
+| CheckinEndsAt | DATETIMEOFFSET | NULLABLE | When QR check-in closes. NULL = no auto-close |
+| CreatedAt | DATETIMEOFFSET | NOT NULL, DEFAULT SYSDATETIMEOFFSET() | |
+| UpdatedAt | DATETIMEOFFSET | NOT NULL, DEFAULT SYSDATETIMEOFFSET() | |
 
 **Unique constraint:** `(OrganizationId, Slug)`
 
@@ -200,14 +200,14 @@ An event belonging to an organization. Replaces the old KCGameOn `Events` table.
 
 Org-level templates for reusable ticket categories. These define the label and description but not event-specific pricing or capacity.
 
-| Column         | Type             | Constraints                           | Notes                                   |
-| -------------- | ---------------- | ------------------------------------- | --------------------------------------- |
-| Id             | UNIQUEIDENTIFIER | PK                                    |                                         |
-| OrganizationId | UNIQUEIDENTIFIER | FK → Organizations, NOT NULL          |                                         |
-| Name           | NVARCHAR(100)    | NOT NULL                              | e.g. `General Admission`, `VIP`, `BYOC` |
-| Description    | NVARCHAR(1000)   | NULLABLE                              |                                         |
-| IsActive       | BIT              | NOT NULL, DEFAULT 1                   |                                         |
-| CreatedAt      | DATETIMEOFFSET   | NOT NULL, DEFAULT SYSDATETIMEOFFSET() |                                         |
+| Column | Type | Constraints | Notes |
+| --- | --- | --- | --- |
+| Id | UNIQUEIDENTIFIER | PK | |
+| OrganizationId | UNIQUEIDENTIFIER | FK → Organizations, NOT NULL | |
+| Name | NVARCHAR(100) | NOT NULL | e.g. `General Admission`, `VIP`, `BYOC` |
+| Description | NVARCHAR(1000) | NULLABLE | |
+| IsActive | BIT | NOT NULL, DEFAULT 1 | |
+| CreatedAt | DATETIMEOFFSET | NOT NULL, DEFAULT SYSDATETIMEOFFSET() | |
 
 ---
 
@@ -215,20 +215,20 @@ Org-level templates for reusable ticket categories. These define the label and d
 
 Event-specific ticket offerings. Links a TicketType to an Event with pricing and capacity. This is what attendees actually purchase.
 
-| Column                 | Type             | Constraints                           | Notes                                                                     |
-| ---------------------- | ---------------- | ------------------------------------- | ------------------------------------------------------------------------- |
-| Id                     | UNIQUEIDENTIFIER | PK                                    |                                                                           |
-| EventId                | UNIQUEIDENTIFIER | FK → Events, NOT NULL                 |                                                                           |
-| TicketTypeId           | UNIQUEIDENTIFIER | FK → TicketTypes, NOT NULL            |                                                                           |
-| PriceCents             | INT              | NOT NULL                              | Price in cents to avoid floating point                                    |
-| MaxQuantity            | INT              | NULLABLE                              | NULL = unlimited                                                          |
-| SalesStartAt           | DATETIMEOFFSET   | NULLABLE                              | When tickets go on sale                                                   |
-| SalesEndAt             | DATETIMEOFFSET   | NULLABLE                              | When sales close                                                          |
-| RequireAllDependencies | BIT              | NOT NULL, DEFAULT 0                   | FALSE = any one prerequisite is enough. TRUE = all prerequisites required |
-| IsActive               | BIT              | NOT NULL, DEFAULT 1                   |                                                                           |
-| StripeProductId        | NVARCHAR(255)    | NULLABLE                              | Stripe Product ID on the org's connected account                          |
-| StripePriceId          | NVARCHAR(255)    | NULLABLE                              | Stripe Price ID on the org's connected account                            |
-| CreatedAt              | DATETIMEOFFSET   | NOT NULL, DEFAULT SYSDATETIMEOFFSET() |                                                                           |
+| Column | Type | Constraints | Notes |
+| --- | --- | --- | --- |
+| Id | UNIQUEIDENTIFIER | PK | |
+| EventId | UNIQUEIDENTIFIER | FK → Events, NOT NULL | |
+| TicketTypeId | UNIQUEIDENTIFIER | FK → TicketTypes, NOT NULL | |
+| PriceCents | INT | NOT NULL | Price in cents to avoid floating point |
+| MaxQuantity | INT | NULLABLE | NULL = unlimited |
+| SalesStartAt | DATETIMEOFFSET | NULLABLE | When tickets go on sale |
+| SalesEndAt | DATETIMEOFFSET | NULLABLE | When sales close |
+| RequireAllDependencies | BIT | NOT NULL, DEFAULT 0 | FALSE = any one prerequisite is enough. TRUE = all prerequisites required |
+| IsActive | BIT | NOT NULL, DEFAULT 1 | |
+| StripeProductId | NVARCHAR(255) | NULLABLE | Stripe Product ID on the org's connected account |
+| StripePriceId | NVARCHAR(255) | NULLABLE | Stripe Price ID on the org's connected account |
+| CreatedAt | DATETIMEOFFSET | NOT NULL, DEFAULT SYSDATETIMEOFFSET() | |
 
 ---
 
@@ -236,21 +236,21 @@ Event-specific ticket offerings. Links a TicketType to an Event with pricing and
 
 Defines prerequisite tickets. Whether the attendee needs **any** or **all** of the listed prerequisites is controlled by `RequireAllDependencies` on the parent EventTicket.
 
-| Column                | Type             | Constraints                           | Notes                                   |
-| --------------------- | ---------------- | ------------------------------------- | --------------------------------------- |
-| Id                    | UNIQUEIDENTIFIER | PK                                    |                                         |
-| EventTicketId         | UNIQUEIDENTIFIER | FK → EventTickets, NOT NULL           | The ticket that has a prerequisite      |
-| RequiresEventTicketId | UNIQUEIDENTIFIER | FK → EventTickets, NOT NULL           | A ticket that satisfies the requirement |
-| CreatedAt             | DATETIMEOFFSET   | NOT NULL, DEFAULT SYSDATETIMEOFFSET() |                                         |
+| Column | Type | Constraints | Notes |
+| --- | --- | --- | --- |
+| Id | UNIQUEIDENTIFIER | PK | |
+| EventTicketId | UNIQUEIDENTIFIER | FK → EventTickets, NOT NULL | The ticket that has a prerequisite |
+| RequiresEventTicketId | UNIQUEIDENTIFIER | FK → EventTickets, NOT NULL | A ticket that satisfies the requirement |
+| CreatedAt | DATETIMEOFFSET | NOT NULL, DEFAULT SYSDATETIMEOFFSET() | |
 
 **Unique constraint:** `(EventTicketId, RequiresEventTicketId)`
 
 **Example — Food Add-On requires GA or VIP (`RequireAllDependencies = false`):**
 
 | EventTicketId | RequiresEventTicketId |
-| ------------- | --------------------- |
-| (food-addon)  | (general-admission)   |
-| (food-addon)  | (vip)                 |
+| --- | --- |
+| (food-addon) | (general-admission) |
+| (food-addon) | (vip) |
 
 **Validation logic:** When a user attempts to purchase an EventTicket that has rows in this table, check the attendee's existing valid UserTickets (and items in the current cart) against the prerequisites. If `RequireAllDependencies = false`, any one match is sufficient. If `TRUE`, all prerequisites must be met. **For gift purchases, dependencies are checked against the recipient (the attendee on the UserTicket), not the purchaser.** The person receiving the Food Add-On must hold the GA/VIP ticket, not the person paying for it.
 
@@ -260,20 +260,20 @@ Defines prerequisite tickets. Whether the attendee needs **any** or **all** of t
 
 Groups one or more purchased tickets into a single transaction. Tied to a Stripe Checkout Session or Payment Intent via Stripe Connect.
 
-| Column                  | Type             | Constraints                           | Notes                                        |
-| ----------------------- | ---------------- | ------------------------------------- | -------------------------------------------- |
-| Id                      | UNIQUEIDENTIFIER | PK                                    |                                              |
-| UserId                  | UNIQUEIDENTIFIER | FK → Users, NOT NULL                  | The purchaser                                |
-| OrganizationId          | UNIQUEIDENTIFIER | FK → Organizations, NOT NULL          | Denormalized for easier querying             |
-| EventId                 | UNIQUEIDENTIFIER | FK → Events, NOT NULL                 |                                              |
-| StripePaymentIntentId   | NVARCHAR(255)    | NULLABLE                              | Stripe PI on the connected account           |
-| StripeCheckoutSessionId | NVARCHAR(255)    | NULLABLE                              | Stripe Checkout Session ID                   |
-| Status                  | NVARCHAR(50)     | NOT NULL, DEFAULT 'pending'           | `pending`, `completed`, `refunded`, `failed` |
-| TotalCents              | INT              | NOT NULL                              | Total amount charged                         |
-| PlatformFeeCents        | INT              | NOT NULL, DEFAULT 0                   | Your platform's cut                          |
-| DiscountCodeId          | UNIQUEIDENTIFIER | FK → DiscountCodes, NULLABLE          | Discount code applied at checkout            |
-| CreatedAt               | DATETIMEOFFSET   | NOT NULL, DEFAULT SYSDATETIMEOFFSET() |                                              |
-| UpdatedAt               | DATETIMEOFFSET   | NOT NULL, DEFAULT SYSDATETIMEOFFSET() |                                              |
+| Column | Type | Constraints | Notes |
+| --- | --- | --- | --- |
+| Id | UNIQUEIDENTIFIER | PK | |
+| UserId | UNIQUEIDENTIFIER | FK → Users, NOT NULL | The purchaser |
+| OrganizationId | UNIQUEIDENTIFIER | FK → Organizations, NOT NULL | Denormalized for easier querying |
+| EventId | UNIQUEIDENTIFIER | FK → Events, NOT NULL | |
+| StripePaymentIntentId | NVARCHAR(255) | NULLABLE | Stripe PI on the connected account |
+| StripeCheckoutSessionId | NVARCHAR(255) | NULLABLE | Stripe Checkout Session ID |
+| Status | NVARCHAR(50) | NOT NULL, DEFAULT 'pending' | `pending`, `completed`, `refunded`, `failed` |
+| TotalCents | INT | NOT NULL | Total amount charged |
+| PlatformFeeCents | INT | NOT NULL, DEFAULT 0 | Your platform's cut |
+| DiscountCodeId | UNIQUEIDENTIFIER | FK → DiscountCodes, NULLABLE | Discount code applied at checkout |
+| CreatedAt | DATETIMEOFFSET | NOT NULL, DEFAULT SYSDATETIMEOFFSET() | |
+| UpdatedAt | DATETIMEOFFSET | NOT NULL, DEFAULT SYSDATETIMEOFFSET() | |
 
 ---
 
@@ -281,13 +281,13 @@ Groups one or more purchased tickets into a single transaction. Tied to a Stripe
 
 Individual line items within an order. One row per ticket per attendee — maps 1:1 to a UserTicket.
 
-| Column        | Type             | Constraints                           | Notes                                |
-| ------------- | ---------------- | ------------------------------------- | ------------------------------------ |
-| Id            | UNIQUEIDENTIFIER | PK                                    |                                      |
-| OrderId       | UNIQUEIDENTIFIER | FK → Orders, NOT NULL                 |                                      |
-| EventTicketId | UNIQUEIDENTIFIER | FK → EventTickets, NOT NULL           | Which ticket offering was purchased  |
-| PriceCents    | INT              | NOT NULL                              | Price at time of purchase (snapshot) |
-| CreatedAt     | DATETIMEOFFSET   | NOT NULL, DEFAULT SYSDATETIMEOFFSET() |                                      |
+| Column | Type | Constraints | Notes |
+| --- | --- | --- | --- |
+| Id | UNIQUEIDENTIFIER | PK | |
+| OrderId | UNIQUEIDENTIFIER | FK → Orders, NOT NULL | |
+| EventTicketId | UNIQUEIDENTIFIER | FK → EventTickets, NOT NULL | Which ticket offering was purchased |
+| PriceCents | INT | NOT NULL | Price at time of purchase (snapshot) |
+| CreatedAt | DATETIMEOFFSET | NOT NULL, DEFAULT SYSDATETIMEOFFSET() | |
 
 ---
 
@@ -295,20 +295,20 @@ Individual line items within an order. One row per ticket per attendee — maps 
 
 The actual ticket assigned to an attendee. Separated from OrderItems to support buying tickets for others. This is what generates the QR code and gets scanned at the door. For gift tickets where the recipient doesn't have an account, `UserId` is NULL and the ticket enters `pendingClaim` status until claimed.
 
-| Column             | Type             | Constraints                           | Notes                                                            |
-| ------------------ | ---------------- | ------------------------------------- | ---------------------------------------------------------------- |
-| Id                 | UNIQUEIDENTIFIER | PK                                    |                                                                  |
-| OrderItemId        | UNIQUEIDENTIFIER | FK → OrderItems, NOT NULL             | Links back to the purchase                                       |
-| UserId             | UNIQUEIDENTIFIER | FK → Users, NULLABLE                  | The attendee. NULL for unclaimed gift tickets                    |
-| EventId            | UNIQUEIDENTIFIER | FK → Events, NOT NULL                 | Denormalized for check-in queries                                |
-| TicketCode         | NVARCHAR(50)     | NOT NULL, UNIQUE                      | Short unique code encoded in QR                                  |
-| Status             | NVARCHAR(50)     | NOT NULL, DEFAULT 'valid'             | `valid`, `checkedIn`, `cancelled`, `transferred`, `pendingClaim` |
-| ClaimEmail         | NVARCHAR(255)    | NULLABLE                              | Recipient email for unclaimed gift tickets                       |
-| ClaimToken         | NVARCHAR(255)    | NULLABLE, UNIQUE                      | URL-safe token sent in claim email                               |
-| ClaimExpiresAt     | DATETIMEOFFSET   | NULLABLE                              | When the claim link expires                                      |
-| CheckedInAt        | DATETIMEOFFSET   | NULLABLE                              | Timestamp of QR scan at the door                                 |
-| CheckedInByStaffId | UNIQUEIDENTIFIER | FK → Users, NULLABLE                  | Which staff member scanned it                                    |
-| CreatedAt          | DATETIMEOFFSET   | NOT NULL, DEFAULT SYSDATETIMEOFFSET() |                                                                  |
+| Column | Type | Constraints | Notes |
+| --- | --- | --- | --- |
+| Id | UNIQUEIDENTIFIER | PK | |
+| OrderItemId | UNIQUEIDENTIFIER | FK → OrderItems, NOT NULL | Links back to the purchase |
+| UserId | UNIQUEIDENTIFIER | FK → Users, NULLABLE | The attendee. NULL for unclaimed gift tickets |
+| EventId | UNIQUEIDENTIFIER | FK → Events, NOT NULL | Denormalized for check-in queries |
+| TicketCode | NVARCHAR(50) | NOT NULL, UNIQUE | Short unique code encoded in QR |
+| Status | NVARCHAR(50) | NOT NULL, DEFAULT 'valid' | `valid`, `checkedIn`, `cancelled`, `transferred`, `pendingClaim` |
+| ClaimEmail | NVARCHAR(255) | NULLABLE | Recipient email for unclaimed gift tickets |
+| ClaimToken | NVARCHAR(255) | NULLABLE, UNIQUE | URL-safe token sent in claim email |
+| ClaimExpiresAt | DATETIMEOFFSET | NULLABLE | When the claim link expires |
+| CheckedInAt | DATETIMEOFFSET | NULLABLE | Timestamp of QR scan at the door |
+| CheckedInByStaffId | UNIQUEIDENTIFIER | FK → Users, NULLABLE | Which staff member scanned it |
+| CreatedAt | DATETIMEOFFSET | NOT NULL, DEFAULT SYSDATETIMEOFFSET() | |
 
 ---
 
@@ -316,21 +316,21 @@ The actual ticket assigned to an attendee. Separated from OrderItems to support 
 
 Promo codes that can be scoped to an entire event or a specific ticket offering. Optionally owned by a user (influencer/affiliate) for tracking referrals and commissions.
 
-| Column          | Type             | Constraints                           | Notes                                                              |
-| --------------- | ---------------- | ------------------------------------- | ------------------------------------------------------------------ |
-| Id              | UNIQUEIDENTIFIER | PK                                    |                                                                    |
-| OrganizationId  | UNIQUEIDENTIFIER | FK → Organizations, NOT NULL          |                                                                    |
-| EventId         | UNIQUEIDENTIFIER | FK → Events, NULLABLE                 | NULL = applies to all org events                                   |
-| EventTicketId   | UNIQUEIDENTIFIER | FK → EventTickets, NULLABLE           | NULL = applies to all tickets in event                             |
-| UserId          | UNIQUEIDENTIFIER | FK → Users, NULLABLE                  | The influencer/affiliate who owns this code. NULL = org-wide promo |
-| Code            | NVARCHAR(100)    | NOT NULL                              |                                                                    |
-| DiscountCents   | INT              | NOT NULL, DEFAULT 0                   | Flat amount off (in cents)                                         |
-| DiscountPercent | INT              | NOT NULL, DEFAULT 0                   | Percentage off (0–100)                                             |
-| MaxUses         | INT              | NULLABLE                              | NULL = unlimited                                                   |
-| TimesUsed       | INT              | NOT NULL, DEFAULT 0                   |                                                                    |
-| ExpiresAt       | DATETIMEOFFSET   | NULLABLE                              |                                                                    |
-| IsActive        | BIT              | NOT NULL, DEFAULT 1                   |                                                                    |
-| CreatedAt       | DATETIMEOFFSET   | NOT NULL, DEFAULT SYSDATETIMEOFFSET() |                                                                    |
+| Column | Type | Constraints | Notes |
+| --- | --- | --- | --- |
+| Id | UNIQUEIDENTIFIER | PK | |
+| OrganizationId | UNIQUEIDENTIFIER | FK → Organizations, NOT NULL | |
+| EventId | UNIQUEIDENTIFIER | FK → Events, NULLABLE | NULL = applies to all org events |
+| EventTicketId | UNIQUEIDENTIFIER | FK → EventTickets, NULLABLE | NULL = applies to all tickets in event |
+| UserId | UNIQUEIDENTIFIER | FK → Users, NULLABLE | The influencer/affiliate who owns this code. NULL = org-wide promo |
+| Code | NVARCHAR(100) | NOT NULL | |
+| DiscountCents | INT | NOT NULL, DEFAULT 0 | Flat amount off (in cents) |
+| DiscountPercent | INT | NOT NULL, DEFAULT 0 | Percentage off (0-100) |
+| MaxUses | INT | NULLABLE | NULL = unlimited |
+| TimesUsed | INT | NOT NULL, DEFAULT 0 | |
+| ExpiresAt | DATETIMEOFFSET | NULLABLE | |
+| IsActive | BIT | NOT NULL, DEFAULT 1 | |
+| CreatedAt | DATETIMEOFFSET | NOT NULL, DEFAULT SYSDATETIMEOFFSET() | |
 
 **Unique constraint:** `(OrganizationId, Code)`
 

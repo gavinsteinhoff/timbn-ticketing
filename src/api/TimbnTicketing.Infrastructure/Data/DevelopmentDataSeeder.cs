@@ -1,12 +1,10 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using TimbnTicketing.Core;
 using TimbnTicketing.Core.Entities;
 
 namespace TimbnTicketing.Infrastructure.Data;
 
-public class DevelopmentDataSeeder : IHostedService
+public static class DevelopmentDataSeeder
 {
     private static readonly Guid _orgId = Guid.Parse("a1b2c3d4-0001-0000-0000-000000000001");
     private static readonly Guid _byocTypeId = Guid.Parse("a1b2c3d4-0002-0000-0000-000000000001");
@@ -19,15 +17,14 @@ public class DevelopmentDataSeeder : IHostedService
     private static readonly Guid _userId = Guid.Parse("a1b2c3d4-0009-0000-0000-000000000001");
     private static readonly Guid _ownerRoleId = Guid.Parse("a1b2c3d4-000a-0000-0000-000000000001");
 
-    private readonly IServiceProvider _serviceProvider;
-
-    public DevelopmentDataSeeder(IServiceProvider serviceProvider)
-        => _serviceProvider = serviceProvider;
-
-    public async Task StartAsync(CancellationToken cancellationToken)
+    public static void Seed(DbContext context, bool _)
     {
-        using var scope = _serviceProvider.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<PlatformDbContext>();
+        SeedAsync(context, _, CancellationToken.None).GetAwaiter().GetResult();
+    }
+
+    public static async Task SeedAsync(DbContext context, bool _, CancellationToken cancellationToken)
+    {
+        var db = (PlatformDbContext)context;
 
         if (await db.Organizations.AnyAsync(o => o.Id == _orgId, cancellationToken))
             return;
@@ -149,6 +146,4 @@ public class DevelopmentDataSeeder : IHostedService
 
         await db.SaveChangesAsync(cancellationToken);
     }
-
-    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }

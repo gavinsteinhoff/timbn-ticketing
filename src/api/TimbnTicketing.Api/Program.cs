@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Stripe;
@@ -13,10 +14,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-builder.AddSqlServerDbContext<PlatformDbContext>("Ticketing");
-
-if (builder.Environment.IsDevelopment())
-    builder.Services.AddHostedService<DevelopmentDataSeeder>();
+builder.AddSqlServerDbContext<PlatformDbContext>("Ticketing",
+    configureDbContextOptions: options =>
+    {
+        if (builder.Environment.IsDevelopment())
+        {
+            options.UseSeeding(DevelopmentDataSeeder.Seed);
+            options.UseAsyncSeeding(DevelopmentDataSeeder.SeedAsync);
+        }
+    });
 
 var firebaseProjectId = builder.Configuration["Auth:FirebaseProjectId"]!;
 

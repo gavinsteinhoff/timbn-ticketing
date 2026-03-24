@@ -12,7 +12,7 @@ Base URL: `https://api.yourplatform.com`
 
 ### Authentication
 
-All endpoints except public event/ticket browsing require a valid Firebase JWT in the `Authorization: Bearer {token}` header. The JWT contains the user's `AuthProviderId` (sub claim), which is resolved to the platform `UserId` on each request.
+Most endpoints require a valid Firebase JWT in the `Authorization: Bearer {token}` header. The JWT contains the user's `AuthProviderId` (sub claim), which is resolved to the platform `UserId` on each request. Public-facing endpoints (e.g., viewing public orgs and events) allow anonymous access via `.AllowAnonymous()`.
 
 ### Multi-Tenancy
 
@@ -378,9 +378,9 @@ Create a new organization. The authenticated user becomes the owner.
 
 #### `GET /orgs/{orgSlug}`
 
-Get organization details.
+Get organization details. Public orgs are accessible without authentication. Private orgs return 404 for non-members (to avoid revealing the org exists).
 
-**Auth:** Public (basic info). Authenticated members see additional fields.
+**Auth:** Anonymous (public orgs). Authenticated members see additional fields.
 
 **Response:** `200 OK`
 

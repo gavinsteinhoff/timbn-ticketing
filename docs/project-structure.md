@@ -53,7 +53,8 @@ src/api/
 │
 ├── TimbnTicketing.AppHost/                     # Aspire orchestrator — starts everything
 │   ├── TimbnTicketing.AppHost.csproj
-│   └── Program.cs                              # App model: API, database, React dev server
+│   ├── AppHost.cs                              # App model: API, database connection, Stripe secret
+│   └── appsettings.Development.json            # Connection strings for local dev (gitignored)
 │
 ├── TimbnTicketing.ServiceDefaults/             # Shared Aspire service defaults
 │   ├── TimbnTicketing.ServiceDefaults.csproj
@@ -63,7 +64,6 @@ src/api/
 │   ├── TimbnTicketing.Api.csproj
 │   ├── Program.cs                              # App startup, DI, route group registration
 │   ├── appsettings.json
-│   ├── appsettings.Development.json
 │   ├── Endpoints/                              # One file per resource
 │   │   ├── AuthEndpoints.cs
 │   │   ├── OrganizationEndpoints.cs
@@ -81,7 +81,7 @@ src/api/
 │   │   ├── TicketEndpoints.cs
 │   │   └── CurrentUserEndpoints.cs
 │   ├── Auth/
-│   │   ├── CurrentUserContext.cs               # Scoped service: user ID, org, bitwise permissions
+│   │   ├── CurrentRequestContext.cs             # Scoped service: user ID, org, bitwise permissions
 │   │   ├── OrgResolutionMiddleware.cs          # Resolve orgSlug → OrganizationId
 │   │   ├── MembershipResolutionMiddleware.cs   # Resolve user + org → role + permissions
 │   │   ├── UserResolverMiddleware.cs           # Resolve JWT sub → UserId
@@ -134,6 +134,7 @@ src/api/
 │   ├── TimbnTicketing.Infrastructure.csproj
 │   ├── Data/
 │   │   ├── PlatformDbContext.cs                # EF Core DbContext
+│   │   ├── DevelopmentDataSeeder.cs            # Dev seed data via UseSeeding/UseAsyncSeeding
 │   │   ├── Configurations/                     # Fluent API entity configurations
 │   │   │   ├── OrganizationConfiguration.cs
 │   │   │   ├── UserConfiguration.cs
@@ -210,7 +211,7 @@ The AppHost project references the Api project so Aspire can discover and launch
 | `Aspire.Hosting` | AppHost | Aspire orchestration |
 | `Aspire.Hosting.SqlServer` | AppHost | SQL Server resource support |
 | `Aspire.Hosting.NodeJs` | AppHost | React dev server orchestration |
-| `Aspire.Microsoft.EntityFrameworkCore.SqlServer` | Infrastructure | Aspire-aware EF Core SQL Server integration |
+| `Aspire.Microsoft.EntityFrameworkCore.SqlServer` | Api | Aspire-aware EF Core SQL Server integration (health checks, tracing, resiliency) |
 | `Microsoft.AspNetCore.Authentication.JwtBearer` | Api | Firebase JWT validation |
 | `Microsoft.EntityFrameworkCore` | Infrastructure | ORM |
 | `Microsoft.EntityFrameworkCore.SqlServer` | Infrastructure | SQL Server provider |
@@ -451,40 +452,31 @@ Routes in `App.tsx` use a `<ProtectedRoute>` wrapper that checks auth and option
 git clone https://github.com/timbn/timbn-ticketing.git
 cd timbn-ticketing
 
-# Install web dependencies
-cd src/web
-npm install
-cd ..
-
 # Run everything via Aspire
-cd api
-dotnet run --project TimbnTicketing.AppHost
+aspire start
 ```
 
-That's it. The Aspire AppHost starts the API, the React dev server, and connects to LocalDB — all from a single command. The Aspire dashboard opens automatically in your browser at `https://localhost:17225`, showing logs, traces, and resource status for everything.
+On first run, Aspire will prompt for the Stripe secret key and store it in user secrets. The connection string comes from the AppHost's `appsettings.Development.json` (create it from the template above). The Aspire dashboard shows logs, traces, and resource status.
 
 ### Aspire AppHost
 
 The AppHost defines the entire local application model:
 
 ```csharp
-// src/api/TimbnTicketing.AppHost/Program.cs
+// src/api/TimbnTicketing.AppHost/AppHost.cs
 var builder = DistributedApplication.CreateBuilder(args);
 
-var sql = builder.AddConnectionString("ticketing");
+var stripeSecretKey = builder.AddParameter("stripe-secret-key", secret: true);
+var database = builder.AddConnectionString("Ticketing");
 
-var api = builder.AddProject<Projects.TimbnTicketing_Api>("api")
-    .WithReference(sql);
-
-builder.AddNpmApp("web", "../../web", "dev")
-    .WithReference(api)
-    .WithHttpEndpoint(env: "PORT")
-    .WithExternalHttpEndpoints();
-
-builder.Build().Run();
+var api = builder.AddProject<Projects.TimbnTicketing_Api>("timbnticketing-api")
+    .WithReference(database)
+    .WithEnvironment("Stripe__SecretKey", stripeSecretKey);
 ```
 
-This connects to your existing LocalDB instance via a connection string in `appsettings.Development.json`. If you later want Aspire to spin up a SQL Server container instead, swap `AddConnectionString` for `AddSqlServer("sql").AddDatabase("ticketing")` — but that requires Docker.
+The database connection string lives in the AppHost's `appsettings.Development.json` (gitignored). The Stripe secret key uses Aspire's secret parameter system — on first run, Aspire prompts for the value and stores it in user secrets.
+
+If you later want Aspire to spin up a SQL Server container instead, swap `AddConnectionString` for `AddSqlServer("sql").WithDataVolume().AddDatabase("Ticketing")` — but that requires Docker.
 
 ### Aspire ServiceDefaults
 
@@ -507,20 +499,26 @@ var app = builder.Build();
 app.MapDefaultEndpoints(); // maps /health and /alive
 ```
 
-### Environment Variables
+### Configuration
 
-**API (`src/api/TimbnTicketing.Api/appsettings.Development.json`):**
+**AppHost (`src/api/TimbnTicketing.AppHost/appsettings.Development.json`, gitignored):**
 
 ```json
 {
   "ConnectionStrings": {
-    "ticketing": "Server=(localdb)\\MSSQLLocalDB;Database=TimbnTicketing;Trusted_Connection=true;TrustServerCertificate=true"
-  },
-  "FirebaseProjectId": "timbn-ticketing",
-  "Stripe": {
-    "SecretKey": "sk_test_...",
-    "WebhookSecret": "whsec_...",
-    "PlatformFeePercent": 3
+    "Ticketing": "Server=(localdb)\\MSSQLLocalDB;Database=TimbnTicketing;Trusted_Connection=True;TrustServerCertificate=True"
+  }
+}
+```
+
+**Stripe secret key:** Managed as an Aspire secret parameter. Stored in AppHost user secrets, injected as `Stripe__SecretKey` environment variable.
+
+**API (`src/api/TimbnTicketing.Api/appsettings.json`):**
+
+```json
+{
+  "Auth": {
+    "FirebaseProjectId": "timbn-ticketing"
   }
 }
 ```

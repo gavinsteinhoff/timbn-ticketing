@@ -11,9 +11,8 @@ Multi-tenant event ticketing platform (AGPLv3). Backend is .NET 10 Minimal APIs 
 ## Build & Run Commands
 
 ```bash
-# Run the full stack via Aspire (starts API + Aspire Dashboard)
-cd src/api
-dotnet run --project TimbnTicketing.AppHost
+# Run the full stack via Aspire
+aspire start
 
 # Build all projects
 cd src/api
@@ -25,24 +24,23 @@ dotnet test
 # Run a single test
 dotnet test --filter "FullyQualifiedName~TestClassName.TestMethodName"
 
-# EF Core migrations
+# EF Core migrations (connection string must be passed since it lives in AppHost config)
 cd src/api/TimbnTicketing.Infrastructure
-dotnet ef migrations add MigrationName --startup-project ../TimbnTicketing.Api
-dotnet ef database update --startup-project ../TimbnTicketing.Api
+dotnet ef migrations add MigrationName --startup-project ../TimbnTicketing.Api -- --ConnectionStrings:Ticketing="Server=(localdb)\MSSQLLocalDB;Database=TimbnTicketing;Trusted_Connection=True;TrustServerCertificate=True"
+dotnet ef database update --startup-project ../TimbnTicketing.Api -- --ConnectionStrings:Ticketing="Server=(localdb)\MSSQLLocalDB;Database=TimbnTicketing;Trusted_Connection=True;TrustServerCertificate=True"
 ```
 
-Aspire Dashboard: `https://localhost:17225`
 Health endpoints: `/health` (readiness), `/alive` (liveness)
 
 ## Architecture
 
 ### Solution Layout (under `src/api/`)
 
-- **AppHost** — Aspire orchestrator. Defines the app model (API + database). No business logic.
+- **AppHost** — Aspire orchestrator. Defines the app model (API + database connection + Stripe secret parameter). No business logic.
 - **ServiceDefaults** — Shared config added to all services: OpenTelemetry, health checks, HTTP resilience (retry/circuit breaker/timeout), service discovery.
 - **Api** — HTTP entry point. Minimal API endpoints in `Endpoints/` (one file per resource), middleware for org/membership resolution, permission endpoint filters via `RequirePermission()`, DTOs in `Dtos/Requests/` and `Dtos/Responses/`.
 - **Core** — Domain layer with zero external dependencies. Entities, service interfaces, domain exceptions.
-- **Infrastructure** — EF Core DbContext (`PlatformDbContext`), entity configurations (Fluent API), service implementations (Stripe, QR codes, email), repositories.
+- **Infrastructure** — EF Core DbContext (`PlatformDbContext`), entity configurations (Fluent API), dev data seeding (`DevelopmentDataSeeder` via `UseSeeding`/`UseAsyncSeeding`), service implementations (Stripe, QR codes, email), repositories.
 - **Tests** — xunit. Unit tests for services/endpoints, integration tests using `Aspire.Hosting.Testing`.
 
 ### Dependency Flow

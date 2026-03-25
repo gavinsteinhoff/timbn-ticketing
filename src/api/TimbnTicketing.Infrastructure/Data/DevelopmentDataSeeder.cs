@@ -59,7 +59,7 @@ public static class DevelopmentDataSeeder
             Name = "FOOD",
         };
 
-        var evt = new Event
+        var eventInfo = new Event
         {
             Id = _eventId,
             OrganizationId = _orgId,
@@ -141,7 +141,7 @@ public static class DevelopmentDataSeeder
         db.Roles.Add(ownerRole);
         db.UserOrganizations.Add(userOrg);
         db.TicketTypes.AddRange(byocType, gaType, foodType);
-        db.Events.Add(evt);
+        db.Events.Add(eventInfo);
         db.EventTickets.AddRange(byocTicket, gaTicket, foodTicket);
 
         await db.SaveChangesAsync(cancellationToken);

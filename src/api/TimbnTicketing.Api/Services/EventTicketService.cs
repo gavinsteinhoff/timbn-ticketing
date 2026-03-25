@@ -12,6 +12,8 @@ public class EventTicketService(PlatformDbContext db, IStripeProductService stri
     public async Task<EventTicketResponse?> CreateAsync(
         Guid organizationId,
         Guid eventId,
+        string? stripeConnectAccountId,
+        string? eventName,
         CreateEventTicketRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -42,14 +44,11 @@ public class EventTicketService(PlatformDbContext db, IStripeProductService stri
                 .ToList();
         }
 
-        // Sync to Stripe if org has a connected account
-        var org = await db.Organizations.FindAsync([organizationId], cancellationToken);
-        if (org?.StripeConnectAccountId is not null)
+        if (stripeConnectAccountId is not null)
         {
-            var evt = await db.Events.FindAsync([eventId], cancellationToken);
-            var productName = $"{ticketType.Name} - {evt!.Name}";
+            var productName = $"{ticketType.Name} - {eventName}";
             var result = await stripeProductService.CreateProductAsync(
-                org.StripeConnectAccountId,
+                stripeConnectAccountId,
                 productName,
                 ticketType.Description,
                 request.PriceCents,

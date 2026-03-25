@@ -6,10 +6,10 @@ namespace TimbnTicketing.Api.Services;
 
 public class OrganizationService(PlatformDbContext db)
 {
-    public async Task<OrganizationResponse?> GetBySlugAsync(string slug)
+    public async Task<OrganizationResponse?> GetByIdAsync(Guid organizationId)
     {
         return await db.Organizations
-            .Where(o => o.Slug == slug)
+            .Where(o => o.Id == organizationId)
             .Select(o => new OrganizationResponse(
                 o.Id,
                 o.Name,
@@ -27,8 +27,6 @@ public class OrganizationService(PlatformDbContext db)
                         e.ShortDescription,
                         e.StartsAt,
                         e.EndsAt,
-                        e.IsPublished,
-                        e.IsPrivate,
                         e.BannerUrl,
                         e.AvatarUrl,
                         e.Venue != null

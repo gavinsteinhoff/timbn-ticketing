@@ -13,19 +13,18 @@ public class OrgResolutionMiddleware(RequestDelegate next)
         {
             var org = await db.Organizations
                 .Where(o => o.Slug == orgSlug)
-                .Select(o => new { o.Id, o.IsPublic })
+                .Select(o => new { o.Id, o.IsPublic, o.StripeConnectAccountId })
                 .FirstOrDefaultAsync();
 
             if (org is null)
             {
-                context.Response.StatusCode = StatusCodes.Status404NotFound;
-                context.Response.ContentType = "application/json";
-                await context.Response.WriteAsJsonAsync(new { error = new { code = "ORG_NOT_FOUND" } });
+                await context.WriteErrorAsync(StatusCodes.Status404NotFound, ErrorCodes.OrgNotFound);
                 return;
             }
 
             requestContext.OrganizationId = org.Id;
             requestContext.IsOrgPublic = org.IsPublic;
+            requestContext.OrgStripeConnectAccountId = org.StripeConnectAccountId;
         }
 
         await next(context);

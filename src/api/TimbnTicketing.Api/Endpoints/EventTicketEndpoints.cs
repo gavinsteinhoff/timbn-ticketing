@@ -36,12 +36,16 @@ public static class EventTicketEndpoints
         string eventSlug,
         CreateEventTicketRequest request,
         EventTicketService eventTicketService,
-        CurrentRequestContext requestContext)
+        CurrentRequestContext requestContext,
+        CancellationToken cancellationToken)
     {
         var result = await eventTicketService.CreateAsync(
             requestContext.OrganizationId!.Value,
             requestContext.EventId!.Value,
-            request);
+            requestContext.OrgStripeConnectAccountId,
+            requestContext.EventName,
+            request,
+            cancellationToken);
 
         return result is not null
             ? Results.Created($"/orgs/{orgSlug}/events/{eventSlug}/tickets/{result.Id}", result)

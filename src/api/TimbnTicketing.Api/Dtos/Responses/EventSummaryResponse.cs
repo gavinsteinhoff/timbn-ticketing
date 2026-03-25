@@ -7,8 +7,6 @@ public record EventSummaryResponse(
     string? ShortDescription,
     DateTimeOffset StartsAt,
     DateTimeOffset? EndsAt,
-    bool IsPublished,
-    bool IsPrivate,
     string? BannerUrl,
     string? AvatarUrl,
     VenueSummaryResponse? Venue);

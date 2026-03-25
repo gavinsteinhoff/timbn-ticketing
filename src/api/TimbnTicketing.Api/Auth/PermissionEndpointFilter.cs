@@ -10,7 +10,9 @@ public class MembershipEndpointFilter : IEndpointFilter
 
         if (!requestContext.IsMember)
         {
-            return Results.Json(new { error = new { code = "NOT_A_MEMBER" } }, statusCode: StatusCodes.Status403Forbidden);
+            return Results.Json(
+                new { error = new { code = ErrorCodes.NotAMember } },
+                statusCode: StatusCodes.Status403Forbidden);
         }
 
         return await next(context);
@@ -23,14 +25,11 @@ public class PermissionEndpointFilter(Permission permission) : IEndpointFilter
     {
         var requestContext = context.HttpContext.RequestServices.GetRequiredService<CurrentRequestContext>();
 
-        if (!requestContext.IsMember)
-        {
-            return Results.Json(new { error = new { code = "NOT_A_MEMBER" } }, statusCode: StatusCodes.Status403Forbidden);
-        }
-
         if (!requestContext.HasPermission(permission))
         {
-            return Results.Json(new { error = new { code = "INSUFFICIENT_PERMISSIONS" } }, statusCode: StatusCodes.Status403Forbidden);
+            return Results.Json(
+                new { error = new { code = ErrorCodes.InsufficientPermissions } },
+                statusCode: StatusCodes.Status403Forbidden);
         }
 
         return await next(context);

@@ -17,9 +17,11 @@ public class CurrentRequestContext
     // Set by OrgResolutionMiddleware
     public Guid? OrganizationId { get; set; }
     public bool IsOrgPublic { get; set; }
+    public string? OrgStripeConnectAccountId { get; set; }
 
     // Set by EventResolutionMiddleware
     public Guid? EventId { get; set; }
+    public string? EventName { get; set; }
 
     // Set by MembershipResolutionMiddleware
     public Guid? RoleId { get; set; }

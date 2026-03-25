@@ -11,20 +11,19 @@ public class EventResolutionMiddleware(RequestDelegate next)
 
         if (!string.IsNullOrEmpty(eventSlug) && requestContext.OrganizationId.HasValue)
         {
-            var eventId = await db.Events
+            var eventInfo = await db.Events
                 .Where(e => e.Slug == eventSlug && e.OrganizationId == requestContext.OrganizationId)
-                .Select(e => e.Id)
+                .Select(e => new { e.Id, e.Name })
                 .FirstOrDefaultAsync();
 
-            if (eventId == Guid.Empty)
+            if (eventInfo is null)
             {
-                context.Response.StatusCode = StatusCodes.Status404NotFound;
-                context.Response.ContentType = "application/json";
-                await context.Response.WriteAsJsonAsync(new { error = new { code = "EVENT_NOT_FOUND" } });
+                await context.WriteErrorAsync(StatusCodes.Status404NotFound, ErrorCodes.EventNotFound);
                 return;
             }
 
-            requestContext.EventId = eventId;
+            requestContext.EventId = eventInfo.Id;
+            requestContext.EventName = eventInfo.Name;
         }
 
         await next(context);

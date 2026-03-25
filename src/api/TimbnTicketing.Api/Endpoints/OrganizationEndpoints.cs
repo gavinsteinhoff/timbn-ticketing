@@ -36,10 +36,10 @@ public static class OrganizationEndpoints
 
     private static async Task<IResult> HandleGetOrganization(string orgSlug, OrganizationService organizationService, CurrentRequestContext requestContext)
     {
-        if (!requestContext.CanViewOrg)
+        if (!requestContext.CanViewOrg || !requestContext.OrganizationId.HasValue)
             return Results.NotFound();
 
-        var org = await organizationService.GetBySlugAsync(orgSlug);
+        var org = await organizationService.GetByIdAsync(requestContext.OrganizationId.Value);
 
         return org is not null
             ? Results.Ok(org)

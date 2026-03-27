@@ -45,7 +45,9 @@ builder.Services.AddScoped<CurrentRequestContext>();
 builder.Services.AddScoped<OrganizationService>();
 builder.Services.AddScoped<CurrentUserService>();
 builder.Services.AddScoped<EventTicketService>();
+builder.Services.AddScoped<OrderCheckoutService>();
 builder.Services.AddScoped<IStripeProductService, StripeProductService>();
+builder.Services.AddScoped<IStripeCheckoutService, StripeCheckoutService>();
 
 StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 StripeConfiguration.EnableTelemetry = false;

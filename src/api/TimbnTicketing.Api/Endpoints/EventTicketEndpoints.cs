@@ -11,7 +11,6 @@ public static class EventTicketEndpoints
     public static RouteGroupBuilder MapEventTicketEndpoints(this RouteGroupBuilder group)
     {
         group.WithTags("Event Tickets");
-
         group.MapGet("/", HandleListEventTickets);
         group.MapPost("/", HandleCreateEventTicket)
             .WithName("CreateEventTicket")
@@ -21,8 +20,10 @@ public static class EventTicketEndpoints
             .Accepts<CreateEventTicketRequest>("application/json")
             .Produces<EventTicketResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status404NotFound);
+
         group.MapPatch("/{eventTicketId:guid}", HandleUpdateEventTicket)
             .RequirePermission(Permission.CanManageEvents);
+
         group.MapDelete("/{eventTicketId:guid}", HandleDeleteEventTicket)
             .RequirePermission(Permission.CanManageEvents);
 

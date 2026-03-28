@@ -55,6 +55,9 @@
 **Issue:** GET endpoint has no permission check. Any org member can list all discount codes.
 **Action:** Add `.RequirePermission(Permission.CanManageEvents)` to the GET endpoint.
 
+~~#### 6. Discount code user restriction not checked~~
+Not a security issue. `DiscountCode.UserId` was renamed to `ReferrerUserId` — it tracks who gets credit for the code being used (affiliate/referrer), not a usage restriction.
+
 #### 10. Email-based migration linking trusts unverified email
 **File:** `UserResolverMiddleware.cs:60-78`
 **Issue:** Firebase doesn't guarantee email verification by default. An attacker could register with a victim's email and get linked to their migrated account.

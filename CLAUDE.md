@@ -41,6 +41,7 @@ Health endpoints: `/health` (readiness), `/alive` (liveness)
 - **Api** — HTTP entry point. Minimal API endpoints in `Endpoints/` (one file per resource), middleware for org/membership resolution, permission endpoint filters via `RequirePermission()`, DTOs in `Dtos/Requests/` and `Dtos/Responses/`.
 - **Core** — Domain layer with zero external dependencies. Entities, service interfaces, domain exceptions.
 - **Infrastructure** — EF Core DbContext (`PlatformDbContext`), entity configurations (Fluent API), dev data seeding (`DevelopmentDataSeeder` via `UseSeeding`/`UseAsyncSeeding`), service implementations (Stripe, QR codes, email), repositories.
+- **Tools.Migration** — Console app for migrating KCGameOn users from MySQL to Timbn. Two commands: `export` (MySQL → JSON) and `import` (JSON → SQL Server via PlatformDbContext).
 - **Tests** — xunit. Unit tests for services/endpoints, integration tests using `Aspire.Hosting.Testing`.
 
 ### Dependency Flow
@@ -49,6 +50,7 @@ Health endpoints: `/health` (readiness), `/alive` (liveness)
 AppHost → Api, ServiceDefaults
 Api → Core, Infrastructure, ServiceDefaults
 Infrastructure → Core
+Tools.Migration → Infrastructure, Core
 Core → nothing
 ```
 
@@ -78,6 +80,8 @@ All database queries must be scoped to OrganizationId to prevent cross-tenant da
 - **Claim flow**: Gifted tickets start as `pendingClaim` until the recipient claims via a secure token.
 - **Custom profile fields**: EAV pattern via UserOrganizationMetadataInfo/Values — orgs define custom fields without schema changes.
 - **Money**: All monetary values stored as integer cents (2500 = $25.00).
+- **Checkout concurrency**: Ticket capacity and discount code usage are protected by serializable transactions with pessimistic locking (`UPDLOCK, HOLDLOCK`) to prevent overselling.
+- **User migration**: KCGameOn users are migrated with `AuthProviderId = "kcgo-migrated-{id}"`. `UserResolverMiddleware` links them to a real Firebase UID on first sign-in by matching email (only for accounts with the `kcgo-migrated-` prefix).
 
 ## Naming Conventions
 

@@ -84,7 +84,9 @@ src/api/
 │   │   ├── CurrentRequestContext.cs             # Scoped service: user ID, org, bitwise permissions
 │   │   ├── OrgResolutionMiddleware.cs          # Resolve orgSlug → OrganizationId
 │   │   ├── MembershipResolutionMiddleware.cs   # Resolve user + org → role + permissions
-│   │   ├── UserResolverMiddleware.cs           # Resolve JWT sub → UserId
+│   │   ├── UserResolverMiddleware.cs           # Resolve JWT sub → UserId, auto-provision, migrated user email linking
+│   │   ├── EventResolutionMiddleware.cs       # Resolve eventSlug → EventId
+│   │   ├── ErrorCodes.cs                      # Centralized error code constants
 │   │   └── PermissionEndpointFilter.cs         # Check role permission bits via HasFlag
 │   ├── Extensions/
 │   │   ├── HttpContextExtensions.cs            # GetOrgRole(), GetCurrentUser()
@@ -118,8 +120,8 @@ src/api/
 │   │   ├── UserOrganizationMetadataInfo.cs
 │   │   └── UserOrganizationMetadataValue.cs
 │   ├── Interfaces/                             # Service and repository contracts
-│   │   ├── IStripeConnectService.cs
-│   │   ├── IStripeCheckoutService.cs
+│   │   ├── IStripeProductService.cs            # Create Stripe products/prices on connected accounts
+│   │   ├── IStripeCheckoutService.cs           # Create Stripe Checkout Sessions
 │   │   ├── ITicketValidationService.cs
 │   │   ├── ITicketClaimService.cs
 │   │   ├── IEmailService.cs
@@ -142,9 +144,8 @@ src/api/
 │   │   │   └── ...
 │   │   └── Migrations/                         # EF Core migrations
 │   ├── Services/
-│   │   ├── StripeConnectService.cs
-│   │   ├── StripeCheckoutService.cs
-│   │   ├── StripeWebhookService.cs
+│   │   ├── StripeProductService.cs             # Creates Stripe products/prices via Connect
+│   │   ├── StripeCheckoutService.cs            # Creates Stripe Checkout Sessions via Connect
 │   │   ├── TicketValidationService.cs
 │   │   ├── TicketClaimService.cs
 │   │   ├── QrCodeService.cs
@@ -154,6 +155,11 @@ src/api/
 │       ├── EventRepository.cs
 │       ├── OrderRepository.cs
 │       └── ...
+│
+├── TimbnTicketing.Tools.Migration/              # One-time KCGameOn user migration tool
+│   ├── TimbnTicketing.Tools.Migration.csproj
+│   ├── Program.cs                              # CLI: export (MySQL → JSON) and import (JSON → SQL Server)
+│   └── KcgoUser.cs                             # Export model for KCGameOn user data
 │
 └── TimbnTicketing.Tests/
     ├── TimbnTicketing.Tests.csproj

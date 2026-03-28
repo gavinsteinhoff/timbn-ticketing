@@ -322,7 +322,7 @@ Promo codes that can be scoped to an entire event or a specific ticket offering.
 | OrganizationId | UNIQUEIDENTIFIER | FK → Organizations, NOT NULL | |
 | EventId | UNIQUEIDENTIFIER | FK → Events, NULLABLE | NULL = applies to all org events |
 | EventTicketId | UNIQUEIDENTIFIER | FK → EventTickets, NULLABLE | NULL = applies to all tickets in event |
-| UserId | UNIQUEIDENTIFIER | FK → Users, NULLABLE | The influencer/affiliate who owns this code. NULL = org-wide promo |
+| ReferrerUserId | UNIQUEIDENTIFIER | FK → Users, NULLABLE | The influencer/affiliate who gets credit when this code is used. NULL = org-wide promo |
 | Code | NVARCHAR(100) | NOT NULL | |
 | DiscountCents | INT | NOT NULL, DEFAULT 0 | Flat amount off (in cents) |
 | DiscountPercent | INT | NOT NULL, DEFAULT 0 | Percentage off (0-100) |
@@ -389,7 +389,7 @@ Venues are a separate table rather than inline strings on Events because organiz
 
 ### Discount Code Ownership and Referral Tracking
 
-The optional `UserId` on `DiscountCodes` supports influencer and affiliate programs. When set, that user "owns" the code — the org can track how many sales each influencer drives by joining `Orders.DiscountCodeId` to `DiscountCodes.UserId`. This replaces KCGameOn's old `Influencer` and `InfluencerTransaction` tables with a simpler model. Org-wide promo codes (like a "SUMMER2026" campaign) leave `UserId` NULL.
+The optional `ReferrerUserId` on `DiscountCodes` supports influencer and affiliate programs. When set, that user gets credit when the code is used — the org can track how many sales each influencer drives by joining `Orders.DiscountCodeId` to `DiscountCodes.ReferrerUserId`. This replaces KCGameOn's old `Influencer` and `InfluencerTransaction` tables with a simpler model. Org-wide promo codes (like a "SUMMER2026" campaign) leave `ReferrerUserId` NULL.
 
 ### Ticket Dependencies
 
@@ -421,7 +421,7 @@ All monetary values are stored as integers in cents to avoid floating-point prec
 1. Organization completes Stripe Connect onboarding, `StripeConnectAccountId` is stored
 2. Attendee selects tickets and clicks checkout
 3. Platform validates availability, dependencies, and discount codes
-4. Platform creates an Order (status `pending`) and OrderItems, then creates a Stripe Checkout Session using the org's connected account with a platform fee (`application_fee_amount`)
+4. Inside a serializable transaction with pessimistic locking (`UPDLOCK, HOLDLOCK`), platform re-checks ticket capacity and discount code usage limits, increments `TimesUsed`, creates an Order (status `pending`) and OrderItems, then creates a Stripe Checkout Session using the org's connected account with a platform fee (`application_fee_amount`)
 5. Attendee is redirected to Stripe's hosted checkout page
 6. On success, Stripe redirects back to the platform's confirmation page
 7. Webhook (`checkout.session.completed`) fires → platform updates the Order to `completed`, creates UserTickets (with `valid` or `pendingClaim` status), and sends confirmation emails
@@ -431,10 +431,12 @@ All monetary values are stored as integers in cents to avoid floating-point prec
 
 ## Migration Notes (KCGameOn)
 
-- User accounts are migrated via Firebase import (using Firebase Admin SDK bulk import)
-- The old `useraccount.Username` field becomes a `UserOrganizationMetadataValue` with `metadata_name = 'username'` under the KCGameOn organization
-- Gaming handles (`SteamHandle`, `DiscordAccount`, `PSN_ID`, etc.) each become separate metadata fields defined by KCGameOn
-- Old `payTable` and `checkIn` data should be archived, not migrated — new events use the new schema
-- The `MOD` and `ADMIN` flags on `useraccount` map to corresponding roles in the Roles table under the KCGameOn organization, linked via `UserOrganizations`
-- The old `Influencer` and `InfluencerTransaction` tables are replaced by `DiscountCodes` with a `UserId` set to the influencer's account
+- User accounts are migrated via the `TimbnTicketing.Tools.Migration` console app (`export` from MySQL, `import` to SQL Server)
+- Only users with at least one order in `payTable` are migrated
+- The old `useraccount.Username` is stored as a `legacyUsername` metadata value; `username` metadata is left empty for users to set on first login
+- Users are created with `AuthProviderId = "kcgo-migrated-{id}"` as a placeholder; `UserResolverMiddleware` links them to a real Firebase UID on first sign-in by matching email (only for accounts with the `kcgo-migrated-` prefix)
+- Each migrated user gets a membership in the KCGameOn org with the default `Member` role (`IsDefault = true`, `Hierarchy = 100`)
+- The `MOD` and `ADMIN` flags on `useraccount` map to corresponding roles in the Roles table under the KCGameOn organization, configured separately
+- The old `Influencer` and `InfluencerTransaction` tables are replaced by `DiscountCodes` with `ReferrerUserId` set to the influencer's account
 - Recurring venues should be created as Venues records during migration so they're available for future events
+- A legacy login flow using Firebase custom tokens is planned to support users who don't have access to their original email (see `docs/kcgameon-integration.md`)

@@ -31,9 +31,9 @@ public class DiscountCodeConfiguration : IEntityTypeConfiguration<DiscountCode>
             .HasForeignKey(e => e.EventTicketId)
             .OnDelete(DeleteBehavior.NoAction);
 
-        builder.HasOne(e => e.User)
-            .WithMany(u => u.OwnedDiscountCodes)
-            .HasForeignKey(e => e.UserId)
+        builder.HasOne(e => e.ReferrerUser)
+            .WithMany(u => u.ReferredDiscountCodes)
+            .HasForeignKey(e => e.ReferrerUserId)
             .OnDelete(DeleteBehavior.SetNull);
     }
 }

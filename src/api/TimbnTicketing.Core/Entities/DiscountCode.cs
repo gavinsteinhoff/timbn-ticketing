@@ -6,7 +6,7 @@ public class DiscountCode
     public Guid OrganizationId { get; set; }
     public Guid? EventId { get; set; }
     public Guid? EventTicketId { get; set; }
-    public Guid? UserId { get; set; }
+    public Guid? ReferrerUserId { get; set; }
     public string Code { get; set; } = string.Empty;
     public int DiscountCents { get; set; }
     public int DiscountPercent { get; set; }
@@ -19,6 +19,6 @@ public class DiscountCode
     public Organization Organization { get; set; } = null!;
     public Event? Event { get; set; }
     public EventTicket? EventTicket { get; set; }
-    public User? User { get; set; }
+    public User? ReferrerUser { get; set; }
     public ICollection<Order> Orders { get; set; } = [];
 }

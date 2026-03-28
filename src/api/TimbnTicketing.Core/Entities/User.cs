@@ -14,5 +14,5 @@ public class User
     public ICollection<UserOrganizationMetadataValue> MetadataValues { get; set; } = [];
     public ICollection<Order> Orders { get; set; } = [];
     public ICollection<UserTicket> UserTickets { get; set; } = [];
-    public ICollection<DiscountCode> OwnedDiscountCodes { get; set; } = [];
+    public ICollection<DiscountCode> ReferredDiscountCodes { get; set; } = [];
 }

@@ -419,3 +419,4 @@ FodyWeavers.xsd
 /src/app/config.js
 **/appsettings.Development.json
 .claude/settings.local.json
+/src/api/TimbnTicketing.Infrastructure/Data/kcgo-users.json

@@ -7,4 +7,5 @@
   <Project Path="TimbnTicketing.Core/TimbnTicketing.Core.csproj" />
   <Project Path="TimbnTicketing.Infrastructure/TimbnTicketing.Infrastructure.csproj" />
   <Project Path="TimbnTicketing.ServiceDefaults/TimbnTicketing.ServiceDefaults.csproj" />
+  <Project Path="TimbnTicketing.Tools.Migration/TimbnTicketing.Tools.Migration.csproj" />
 </Solution>

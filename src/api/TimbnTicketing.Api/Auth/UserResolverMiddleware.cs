@@ -1,5 +1,6 @@
-using System.Security.Claims;
+using Azure;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using TimbnTicketing.Core.Entities;
 using TimbnTicketing.Infrastructure.Data;
 
@@ -15,30 +16,66 @@ public class UserResolverMiddleware(RequestDelegate next)
     public async Task InvokeAsync(HttpContext context, PlatformDbContext db, CurrentRequestContext requestContext)
     {
         if (context.User.Identity?.IsAuthenticated == true)
-        {
-            var authProviderId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (!string.IsNullOrEmpty(authProviderId))
-            {
-                var userId = await db.Users
-                    .Where(u => u.AuthProviderId == authProviderId)
-                    .Select(u => u.Id)
-                    .FirstOrDefaultAsync();
-
-                if (userId == Guid.Empty)
-                {
-                    userId = await AutoProvisionUserAsync(context, db, authProviderId);
-                }
-
-                if (userId != Guid.Empty)
-                {
-                    requestContext.UserId = userId;
-                    requestContext.AuthProviderId = authProviderId;
-                }
-            }
-        }
+            await RunAuthLogic(context, db, requestContext);
 
         await next(context);
+    }
+
+    private static async Task RunAuthLogic(HttpContext context, PlatformDbContext db, CurrentRequestContext requestContext)
+    {
+        var authProviderId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrEmpty(authProviderId))
+            return;
+
+        var userId = await db.Users
+            .Where(u => u.AuthProviderId == authProviderId)
+            .Select(u => u.Id)
+            .FirstOrDefaultAsync();
+
+        if (userId == Guid.Empty)
+        {
+            userId = await TryLinkMigratedUserAsync(context, db, authProviderId);
+        }
+
+        if (userId == Guid.Empty)
+        {
+            userId = await AutoProvisionUserAsync(context, db, authProviderId);
+        }
+
+        if (userId != Guid.Empty)
+        {
+            requestContext.UserId = userId;
+            requestContext.AuthProviderId = authProviderId;
+        }
+    }
+
+    private const string MigrationPrefix = "kcgo-migrated-";
+
+    /// <summary>
+    /// Handles migrated users: if no AuthProviderId match but an email match exists
+    /// AND the existing account has a migration placeholder, link the Firebase UID.
+    /// Non-migrated email collisions are ignored — AutoProvision will handle them.
+    /// </summary>
+    private static async Task<Guid> TryLinkMigratedUserAsync(
+        HttpContext context, PlatformDbContext db, string authProviderId)
+    {
+        var email = context.User.FindFirstValue(ClaimTypes.Email)
+            ?? context.User.FindFirstValue("email");
+
+        if (string.IsNullOrEmpty(email))
+            return Guid.Empty;
+
+        var existingUser = await db.Users
+            .FirstOrDefaultAsync(u => u.Email == email);
+
+        if (existingUser is null || !existingUser.AuthProviderId.StartsWith(MigrationPrefix))
+            return Guid.Empty;
+
+        existingUser.AuthProviderId = authProviderId;
+        await db.SaveChangesAsync();
+
+        return existingUser.Id;
     }
 
     private static async Task<Guid> AutoProvisionUserAsync(
@@ -72,7 +109,7 @@ public class UserResolverMiddleware(RequestDelegate next)
         }
         catch (DbUpdateException)
         {
-            // Unique constraint violation from a concurrent first request — re-query
+            // Concurrent first request from the same user — re-query by AuthProviderId
             db.Entry(user).State = EntityState.Detached;
             return await db.Users
                 .Where(u => u.AuthProviderId == authProviderId)

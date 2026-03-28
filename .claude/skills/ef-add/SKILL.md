@@ -11,10 +11,10 @@ All commands run from `src/api/` with `--project ./TimbnTicketing.Infrastructure
 
 ## Steps
 
-1. **Add migration:** `dotnet-ef migrations add $ARGUMENTS --project ./TimbnTicketing.Infrastructure --startup-project ./TimbnTicketing.Api`
-2. **Update database:** `dotnet-ef database update --project ./TimbnTicketing.Infrastructure --startup-project ./TimbnTicketing.Api`
+1. **Add migration:** `dotnet-ef migrations add $ARGUMENTS --project ./TimbnTicketing.Infrastructure --startup-project ./TimbnTicketing.Api -- --ConnectionStrings:Ticketing="Server=(localdb)\MSSQLLocalDB;Database=TimbnTicketing;Trusted_Connection=True;TrustServerCertificate=True"`
+2. **Update database:** `dotnet-ef database update --project ./TimbnTicketing.Infrastructure --startup-project ./TimbnTicketing.Api -- --ConnectionStrings:Ticketing="Server=(localdb)\MSSQLLocalDB;Database=TimbnTicketing;Trusted_Connection=True;TrustServerCertificate=True"`
 3. **If any step fails:**
-   - Remove the failed migration: `dotnet-ef migrations remove --project ./TimbnTicketing.Infrastructure --startup-project ./TimbnTicketing.Api`
+   - Remove the failed migration: `dotnet-ef migrations remove --project ./TimbnTicketing.Infrastructure --startup-project ./TimbnTicketing.Api -- --ConnectionStrings:Ticketing="Server=(localdb)\MSSQLLocalDB;Database=TimbnTicketing;Trusted_Connection=True;TrustServerCertificate=True"`
    - Analyze the error output
    - Propose fixes to the relevant entity or configuration files
    - Ask the user to accept the fixes before applying them

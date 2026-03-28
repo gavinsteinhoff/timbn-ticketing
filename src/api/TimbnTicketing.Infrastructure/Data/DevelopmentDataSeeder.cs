@@ -16,6 +16,7 @@ public static class DevelopmentDataSeeder
     private static readonly Guid _foodEventTicketId = Guid.Parse("a1b2c3d4-0008-0000-0000-000000000001");
     private static readonly Guid _userId = Guid.Parse("a1b2c3d4-0009-0000-0000-000000000001");
     private static readonly Guid _ownerRoleId = Guid.Parse("a1b2c3d4-000a-0000-0000-000000000001");
+    private static readonly Guid _memberRoleId = Guid.Parse("a1b2c3d4-000b-0000-0000-000000000001");
 
     public static void Seed(DbContext context, bool _)
     {
@@ -129,6 +130,17 @@ public static class DevelopmentDataSeeder
                 | Permission.CanViewAttendees,
         };
 
+        var memberRole = new Role
+        {
+            Id = _memberRoleId,
+            OrganizationId = _orgId,
+            Name = "Member",
+            Slug = "member",
+            Hierarchy = 100,
+            IsDefault = true,
+            Permissions = Permission.None,
+        };
+
         var userOrg = new UserOrganization
         {
             UserId = _userId,
@@ -138,7 +150,7 @@ public static class DevelopmentDataSeeder
 
         db.Organizations.Add(org);
         db.Users.Add(user);
-        db.Roles.Add(ownerRole);
+        db.Roles.AddRange(ownerRole, memberRole);
         db.UserOrganizations.Add(userOrg);
         db.TicketTypes.AddRange(byocType, gaType, foodType);
         db.Events.Add(eventInfo);
